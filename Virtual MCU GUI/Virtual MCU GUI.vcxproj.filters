@@ -18,9 +18,15 @@
     <ClCompile Include="VirtualMcuApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="VirtualMcuMain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="VirtualMcuApp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VirtualMcuMain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

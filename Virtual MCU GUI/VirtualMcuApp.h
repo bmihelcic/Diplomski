@@ -1,6 +1,7 @@
 #pragma once
 
 #include "wx/wx.h"
+#include "VirtualMcuMain.h"
 
 class VirtualMcuApp : public wxApp
 {
@@ -10,5 +11,8 @@ public:
 
 public:
 	virtual bool OnInit();
+
+private:
+	VirtualMcuMain* m_mainFrame = nullptr;
 };
 
