@@ -3,6 +3,8 @@
 #include "wx/wx.h"
 #include "VirtualMcuMain.h"
 
+// Application derived from wxWidgets application
+// doesn't show an
 class VirtualMcuApp : public wxApp
 {
 public:
