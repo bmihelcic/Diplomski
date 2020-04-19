@@ -1,0 +1,23 @@
+######################### HAL #############################################
+Dizajnirati i implementirati Hardware abstracion layer (HAL) koji æe omoguæiti jednostavnoj aplikaciji èitanje i pisanje s/na jedan digitalni port (koji ima 8 pinova: 4 ulaza, 4 izlaza), dva analogna ulaza i CAN sabirnice. 
+Implementirati upravljaèki sloj (STM32 HAL LIBRARY) za mikrokontroler STM32F1 koji æe HAL koristiti za pristup resursima mikrokontrolera.
+###########################################################################
+
+
+##################### VIRTUAL DRIVERS #####################################
+Paralelno implementirati virtualne drivere koji æe omoguæiti rad HAL-a i aplikacije na windows operativnom sustavu. Drivere implementirati pomoæu WinSocket2 tehnologije.
+###########################################################################
+
+
+####################### DEMO APP ##########################################
+Iznad HAL-a implementirati jednostavnu aplikaciju koja æe èitati i pisati digitalne pinove te èitati stanja analognih pinova i ispisivati ih na CAN sabirnicu. 
+###########################################################################
+
+
+###################### VIRTUAL MCU GUI ####################################
+Virtualno okruženje takoðer treba sadržavati malu desktop aplikaciju koja omoguæava postavljanje stanja virtualiziranih ulaza/izlaza i komunikacijske sabirnice.
+###########################################################################
+
+
+
+Tema rezervirana za: Branimir Mihelèiæ Sumentor iz tvrtke: Ivan Kvolik (Rimac Automobili)

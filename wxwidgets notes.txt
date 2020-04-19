@@ -1,0 +1,5 @@
+1. The only C++ GUI library built by wrapping native GUI widgets which results in the best user experience on each platform.
+2. Written using only the standard C++ and doesn't rely on any custom extensions or preprocessing.
+3. Open source and free for use in both open source and commercial projects.
+
+C++, Python, Perl, Ruby, Lua, Haskell, D, Erlang, PHP
