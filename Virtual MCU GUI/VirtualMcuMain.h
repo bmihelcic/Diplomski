@@ -2,6 +2,7 @@
 #include "wx/wx.h"
 #include <wx/tglbtn.h>
 #include <wx/sckipc.h>
+#include <wx/richtext/richtextctrl.h>
 
 #define MCU_NOMINAL_VOLTAGE (3.3f)
 #define ADC_MAX_VALUE (4095u)
@@ -29,6 +30,7 @@ protected:
 	wxMenuBar* m_menu_bar;
 	wxMenu* m_main_menu;
 	wxMenuItem* m_item_connect;
+	wxRichTextCtrl* m_console_output;
 
 private:
 	wxDECLARE_EVENT_TABLE();
@@ -48,6 +50,7 @@ enum IDs{
 	ID_input_3,
 	ID_slider_0,
 	ID_slider_1,
-	CLIENT_CONNECT,
-	SOCKET_ID
+	ID_CLIENT_CONNECT,
+	ID_SOCKET,
+	ID_RICHTEXT_WINDOW
 };

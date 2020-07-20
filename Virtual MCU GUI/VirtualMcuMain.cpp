@@ -11,8 +11,8 @@ wxBEGIN_EVENT_TABLE(VirtualMcuMain, wxFrame)
 	EVT_BUTTON(ID_input_3, OnButtonClick)
 	EVT_SLIDER(ID_slider_0, OnSliderUpdate)
 	EVT_SLIDER(ID_slider_1, OnSliderUpdate)
-	EVT_MENU(CLIENT_CONNECT, VirtualMcuMain::OnConnectToServer)
-	EVT_SOCKET(SOCKET_ID, VirtualMcuMain::OnSocketEvent)
+	EVT_MENU(ID_CLIENT_CONNECT, VirtualMcuMain::OnConnectToServer)
+	EVT_SOCKET(ID_SOCKET, VirtualMcuMain::OnSocketEvent)
 wxEND_EVENT_TABLE()
 
 // main frame doesn't have any parent, ID can be any, and at last give it a title
@@ -56,11 +56,15 @@ VirtualMcuMain::VirtualMcuMain() : wxFrame(nullptr, wxID_ANY, "VIRTUAL MCU")
 
 	m_menu_bar = new wxMenuBar(0);
 	m_main_menu = new wxMenu();
-	m_item_connect = new wxMenuItem(m_main_menu, CLIENT_CONNECT, wxString(wxT("Connect")), wxEmptyString, wxITEM_NORMAL);
-//	m_item_connect->Bind(wxEVT_MENU, &VirtualMcuMain::OnConnectToServer, this, CLIENT_CONNECT);
+	m_item_connect = new wxMenuItem(m_main_menu, ID_CLIENT_CONNECT, wxString(wxT("Connect")), wxEmptyString, wxITEM_NORMAL);
 	m_main_menu->Append(m_item_connect);
 	m_menu_bar->Append(m_main_menu, wxT("Menu"));
 	this->SetMenuBar(m_menu_bar);
+
+	m_console_output = new wxRichTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 | wxVSCROLL | wxHSCROLL | wxNO_BORDER | wxWANTS_CHARS);
+	m_console_output->Enable(false);
+	wx_box_sizer_3->Add(m_console_output, 1, wxEXPAND | wxALL, 5);
+
 	
 
 	for (int i = 0; i < 8; i++)
@@ -117,9 +121,10 @@ VirtualMcuMain::VirtualMcuMain() : wxFrame(nullptr, wxID_ANY, "VIRTUAL MCU")
 	wx_box_sizer_1->Add(wx_flex_grid_sizer_1_2, 1, wxLEFT | wxEXPAND, 10);
 	wx_box_sizer_0->Add(wx_box_sizer_1, 1, wxLEFT | wxRIGHT | wxTOP| wxSHAPED, 10);
 	wx_box_sizer_0->Add(wx_box_sizer_2, 1, wxLEFT | wxRIGHT | wxSHAPED, 10);
-	wx_box_sizer_0->Add(wx_box_sizer_3, 1, wxLEFT | wxRIGHT | wxSHAPED, 10);
+	wx_box_sizer_0->Add(wx_box_sizer_3, 1, wxLEFT | wxRIGHT | wxEXPAND, 10);
 
 	this->SetSizer(wx_box_sizer_0);
+
 	this->Layout();
 	this->Centre(wxBOTH);
 }
@@ -185,11 +190,13 @@ void VirtualMcuMain::OnConnectToServer(wxCommandEvent& WXUNUSED(event))
 	// Create the socket
 	wxSocketClient* Socket = new wxSocketClient();
 	// Set up the event handler and subscribe to most events
-	Socket->SetEventHandler(*this, SOCKET_ID);
+	Socket->SetEventHandler(*this, ID_SOCKET);
 	Socket->SetNotify(wxSOCKET_CONNECTION_FLAG | wxSOCKET_INPUT_FLAG | wxSOCKET_LOST_FLAG);
 	Socket->Notify(true);
 	// Wait for the connection event
 	Socket->Connect(addr, false);
+	m_console_output->WriteText(wxT("(info) Connecting to localhost:8888"));
+	m_console_output->Newline();
 }
 
 void VirtualMcuMain::OnSocketEvent(wxSocketEvent& event)
@@ -197,25 +204,27 @@ void VirtualMcuMain::OnSocketEvent(wxSocketEvent& event)
 	// The socket that had the event
 	wxSocketBase* sock = event.GetSocket();
 	// Common buffer shared by the events
-	char buf[10];
+	char buf[20];
 	switch (event.GetSocketEvent())
 	{
 		case wxSOCKET_CONNECTION:
 		{
-			// Fill the arry with the numbers 0 through 9
-			// as characters
-			char mychar = '0';
-			for (int i = 0; i < 10; i++)
-			{
-				buf[i] = mychar++;
-			}
+			wxString outputString = wxString("0x1234");
+
 			// Send the characters to the server
 			sock->Write(buf, sizeof(buf));
+
+			m_console_output->AppendText("SENDING: "+ outputString);
+			m_console_output->Newline();
+		
 			break;
 		}
 		case wxSOCKET_INPUT:
 		{
 			sock->Read(buf, sizeof(buf));
+			m_console_output->AppendText("RECEIVED: ");
+			m_console_output->AppendText(buf);
+			m_console_output->Newline();
 			break;
 		}// The server hangs up after sending the data
 		case wxSOCKET_LOST:
