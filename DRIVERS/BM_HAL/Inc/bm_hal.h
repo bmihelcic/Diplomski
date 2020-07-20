@@ -13,6 +13,7 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
+#ifdef STM32
 #include "stm32f1xx_hal.h"
 #include "stm32f1xx_ll_adc.h"
 #include "stm32f1xx_ll_rcc.h"
@@ -46,8 +47,31 @@ extern "C" {
 #define INPUT3_Pin LL_GPIO_PIN_15
 #define INPUT3_GPIO_Port GPIOA
 
-
 CAN_HandleTypeDef hcan;
+
+#elif defined(VIRTUAL_MCU)
+
+#include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+#define WIN32_LEAN_AND_MEAN
+#define DEFAULT_BUFLEN 100
+#define DEFAULT_PORT "27015"
+#define TELNET_PORT (8888)
+
+typedef enum ERRORS{
+    ERROR_OK,
+    ERROR_INVALID_HEX
+}ERROR_E;
+
+int stringToHex(char*);
+int hexCharToDec(char, ERROR_E*);
+
+#endif
+
 
 void BM_HAL_init();
 void Error_Handler(void);

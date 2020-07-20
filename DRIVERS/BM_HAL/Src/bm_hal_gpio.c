@@ -6,7 +6,9 @@
  */
 
 #include "bm_hal_gpio.h"
+#ifdef STM32
 #include "stm32f1xx_ll_gpio.h"
+#endif
 
 
 /**

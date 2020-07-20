@@ -8,16 +8,58 @@
 #include "bm_hal.h"
 
 
+#ifdef STM32
 static void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_CAN_Init(void);
 static void MX_USART1_UART_Init(void);
+#endif
+
+const int max_clients = 10;
+char rxBuff[1024] =
+{ 0 };
+char canMessage[64] =
+{ 0 };
+char req_buff[10] =
+{ 0 };
+int client_socket[10] =
+{ 0 };
+char *message = "Greeting message";
+
+WSADATA wsaData;
+
+SOCKET ListenSocket = INVALID_SOCKET;
+SOCKET ClientSocket = INVALID_SOCKET;
+
+struct addrinfo *result = NULL;
+struct addrinfo hints;
+
+char recvbuf[DEFAULT_BUFLEN];
+
+int iResult;
+int iSendResult;
+int recvbuflen = DEFAULT_BUFLEN;
+int opt = 1;
+int master_socket;
+int new_socket;
+int activity;
+int i;
+int valread;
+int sd;
+int max_sd;
+int canMsgValue=0;
+int addrlen;
+struct sockaddr_in server;
+struct sockaddr_in client;
+
+fd_set readfds;
+
 
 
 void BM_HAL_init()
 {
-#ifdef STM32F103xB
+#ifdef STM32
 	HAL_Init();
 	SystemClock_Config();
 	MX_GPIO_Init();
@@ -26,12 +68,97 @@ void BM_HAL_init()
 	MX_USART1_UART_Init();
 
 #elif defined(VIRTUAL_MCU)
+    // Initialize Winsock stack
+    printf("(info) Initialising Winsock...\n");
+    fflush(stdout);
+    iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (result != 0)
+    {
+        printf("(error) WSAStartup failed with error: %d\n", iResult);
+        fflush(stdout);
+        return;
+    }
+    printf("(info) Initialised\n");
+    fflush(stdout);
 
+    // info about socket and protocol
+    ZeroMemory(&hints, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_flags = AI_PASSIVE;
+
+    /* getaddrinfo()
+     * Resolve the server address (DNS) and port
+     *  return a pointer to a linked list of addrinfo structs (result)
+     *
+     *  addrinfo: holds information about protocol being used,
+     *  socket type, IPv4 or IPv6, ip address, etc...
+     */
+    getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);
+
+    //create a Listen socket
+    ListenSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (ListenSocket == INVALID_SOCKET)
+    {
+        printf("Error in initializing Listen socket! (%d)\n",
+                WSAGetLastError());
+        fflush(stdout);
+        WSACleanup();
+        exit(EXIT_FAILURE);
+    }
+    printf("(info) Listen socket created\n");
+    fflush(stdout);
+
+    //set listen socket to allow multiple connections , this is just a good habit, it will work without this
+    if (setsockopt(ListenSocket, SOL_SOCKET, SO_REUSEADDR, (char*) &opt,
+            sizeof(opt)) < 0)
+    {
+        printf("setsockopt error\n");
+        fflush(stdout);
+        WSACleanup();
+        exit(EXIT_FAILURE);
+    }
+
+    //type of socket created
+    ZeroMemory(&server, sizeof(server));
+    server.sin_family = AF_INET;
+    server.sin_addr.S_un.S_addr = INADDR_ANY;
+    server.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
+    server.sin_port = htons(TELNET_PORT);
+
+    //bind the socket to localhost port 8888
+    if (bind(ListenSocket, (struct sockaddr*) &server, sizeof(server)) < 0)
+    {
+        printf("(error) bind failed with error: %d\n", WSAGetLastError());
+        fflush(stdout);
+        closesocket(ListenSocket);
+        WSACleanup();
+        return;
+    }
+    printf(
+            "(info) Listen socket bound to ip: localhost (127.0.0.1), port: %d\n",
+            TELNET_PORT);
+
+    if (listen(ListenSocket, 3))
+    {
+        printf("(error) listen failed with error: %d\n", WSAGetLastError());
+        closesocket(ListenSocket);
+        WSACleanup();
+        return;
+    }
+    printf("I'm listening on port %d\n", TELNET_PORT);
+    fflush(stdout);
+
+    addrlen = sizeof(client);
+    puts("Waiting for connections...\n");
+    fflush(stdout);
 #endif
 }
 
 
 
+#ifdef STM32
 /**
   * @brief ADC1 Initialization Function
   * @param None
@@ -244,6 +371,74 @@ void SystemClock_Config(void)
 		Error_Handler();
 	};
 	LL_RCC_SetADCClockSource(LL_RCC_ADC_CLKSRC_PCLK2_DIV_6);
+}
+#endif
+
+int stringToHex(char *inputString)
+{
+    int i;
+    char temp;
+    int result = 0;
+    int n = strlen(inputString)-2;  //how many digits w/o the 1st two (0x)
+    int exp=n;
+    ERROR_E error = ERROR_OK;
+
+    for (i = 0; i < n; i++)
+    {
+        if(error == ERROR_OK){
+            result += hexCharToDec(inputString[i+2], &error) * (int)pow(16, exp-1);
+            exp--;
+        }
+        else{
+            result = -1;
+            printf("(error) Unable to decode input string, wrong hex values!\n");
+            break;
+        }
+    }
+    return result;
+}
+
+
+int hexCharToDec(char c, ERROR_E *error)
+{
+    int result;
+
+    if ((c == '0') || (c == '1') || (c == '2') || (c == '3') || (c == '4')
+            || (c == '5') || (c == '6') || (c == '7') || (c == '8')
+            || (c == '9'))
+    {
+        result = c - 48;
+    }
+    else if (c == 'A' || c == 'a')
+    {
+        result = 10;
+    }
+    else if (c == 'B' || c == 'b')
+    {
+        result = 11;
+    }
+    else if (c == 'C' || c == 'c')
+    {
+        result = 12;
+    }
+    else if (c == 'D' || c == 'd')
+    {
+        result = 13;
+    }
+    else if (c == 'E' || c == 'e')
+    {
+        result = 14;
+    }
+    else if (c == 'F' || c == 'f')
+    {
+        result = 15;
+    }
+    else{
+        result = -1;
+        *error = ERROR_INVALID_HEX;
+    }
+
+    return result;
 }
 
 
