@@ -1,6 +1,7 @@
 #pragma once
 #include "wx/wx.h"
 #include <wx/tglbtn.h>
+#include <wx/sckipc.h>
 
 #define MCU_NOMINAL_VOLTAGE (3.3f)
 #define ADC_MAX_VALUE (4095u)
@@ -12,6 +13,8 @@ public:
 	~VirtualMcuMain();
 	void OnButtonClick(wxCommandEvent &evt);
 	void OnSliderUpdate(wxCommandEvent& evt);
+	void OnConnectToServer(wxCommandEvent& evt);
+	void OnSocketEvent(wxSocketEvent& evt);
 
 protected:
 	wxToggleButton* output_pin[4];
@@ -23,6 +26,9 @@ protected:
 	wxStaticText* adc_label_1;
 	wxStaticText* adc_voltage_label_0;
 	wxStaticText* adc_voltage_label_1;
+	wxMenuBar* m_menu_bar;
+	wxMenu* m_main_menu;
+	wxMenuItem* m_item_connect;
 
 private:
 	wxDECLARE_EVENT_TABLE();
@@ -41,5 +47,7 @@ enum IDs{
 	ID_input_2,
 	ID_input_3,
 	ID_slider_0,
-	ID_slider_1
+	ID_slider_1,
+	CLIENT_CONNECT,
+	SOCKET_ID
 };

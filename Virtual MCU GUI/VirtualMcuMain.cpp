@@ -11,6 +11,8 @@ wxBEGIN_EVENT_TABLE(VirtualMcuMain, wxFrame)
 	EVT_BUTTON(ID_input_3, OnButtonClick)
 	EVT_SLIDER(ID_slider_0, OnSliderUpdate)
 	EVT_SLIDER(ID_slider_1, OnSliderUpdate)
+	EVT_MENU(CLIENT_CONNECT, VirtualMcuMain::OnConnectToServer)
+	EVT_SOCKET(SOCKET_ID, VirtualMcuMain::OnSocketEvent)
 wxEND_EVENT_TABLE()
 
 // main frame doesn't have any parent, ID can be any, and at last give it a title
@@ -51,6 +53,15 @@ VirtualMcuMain::VirtualMcuMain() : wxFrame(nullptr, wxID_ANY, "VIRTUAL MCU")
 
 	wxBoxSizer* wx_box_sizer_3;
 	wx_box_sizer_3 = new wxBoxSizer(wxHORIZONTAL);
+
+	m_menu_bar = new wxMenuBar(0);
+	m_main_menu = new wxMenu();
+	m_item_connect = new wxMenuItem(m_main_menu, CLIENT_CONNECT, wxString(wxT("Connect")), wxEmptyString, wxITEM_NORMAL);
+//	m_item_connect->Bind(wxEVT_MENU, &VirtualMcuMain::OnConnectToServer, this, CLIENT_CONNECT);
+	m_main_menu->Append(m_item_connect);
+	m_menu_bar->Append(m_main_menu, wxT("Menu"));
+	this->SetMenuBar(m_menu_bar);
+	
 
 	for (int i = 0; i < 8; i++)
 	{
@@ -121,6 +132,12 @@ void VirtualMcuMain::OnButtonClick(wxCommandEvent& evt)
 
 	current_button_ID = evt.GetId() - wxID_HIGHEST; // gives 0-7
 
+	if (0 == current_button_ID)
+	{
+		// if button 0 was pressed
+
+
+	}
 	if (current_button_ID < 4)
 	{
 		current_button_state = output_pin[current_button_ID]->GetValue();
@@ -160,8 +177,57 @@ void VirtualMcuMain::OnSliderUpdate(wxCommandEvent& evt)
 	evt.Skip();
 }
 
+void VirtualMcuMain::OnConnectToServer(wxCommandEvent& WXUNUSED(event))
+{
+	wxIPV4address addr;
+	addr.Hostname(wxT("localhost"));
+	addr.Service(8888);
+	// Create the socket
+	wxSocketClient* Socket = new wxSocketClient();
+	// Set up the event handler and subscribe to most events
+	Socket->SetEventHandler(*this, SOCKET_ID);
+	Socket->SetNotify(wxSOCKET_CONNECTION_FLAG | wxSOCKET_INPUT_FLAG | wxSOCKET_LOST_FLAG);
+	Socket->Notify(true);
+	// Wait for the connection event
+	Socket->Connect(addr, false);
+}
+
+void VirtualMcuMain::OnSocketEvent(wxSocketEvent& event)
+{
+	// The socket that had the event
+	wxSocketBase* sock = event.GetSocket();
+	// Common buffer shared by the events
+	char buf[10];
+	switch (event.GetSocketEvent())
+	{
+		case wxSOCKET_CONNECTION:
+		{
+			// Fill the arry with the numbers 0 through 9
+			// as characters
+			char mychar = '0';
+			for (int i = 0; i < 10; i++)
+			{
+				buf[i] = mychar++;
+			}
+			// Send the characters to the server
+			sock->Write(buf, sizeof(buf));
+			break;
+		}
+		case wxSOCKET_INPUT:
+		{
+			sock->Read(buf, sizeof(buf));
+			break;
+		}// The server hangs up after sending the data
+		case wxSOCKET_LOST:
+		{
+			sock->Destroy();
+			break;
+		}
+	}
+}
 
 VirtualMcuMain::~VirtualMcuMain()
 {
 
 }
+
