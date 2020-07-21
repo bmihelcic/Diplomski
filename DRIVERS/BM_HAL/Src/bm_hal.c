@@ -17,21 +17,24 @@ static void MX_USART1_UART_Init(void);
 #endif
 
 #ifdef VIRTUAL_MCU
-const int max_clients = 10;
+
+static SOCKET acceptNewConnection(SOCKET listen_socket);
+static void handleSocketRead(SOCKET socket_descriptor);
+
+
 char rxBuff[1024] =
 { 0 };
 char canMessage[64] =
 { 0 };
 char req_buff[10] =
 { 0 };
-int client_socket[10] =
-{ 0 };
 char *message = "Greeting message";
 
 WSADATA wsaData;
 
-SOCKET ListenSocket = INVALID_SOCKET;
-SOCKET ClientSocket = INVALID_SOCKET;
+SOCKET listenSocket = INVALID_SOCKET;
+SOCKET clientSocket = INVALID_SOCKET;
+SOCKET maxSocket    = INVALID_SOCKET;
 
 struct addrinfo *info = NULL;
 struct addrinfo hints;
@@ -39,22 +42,14 @@ struct addrinfo hints;
 char recvbuf[DEFAULT_BUFLEN];
 
 int iResult;
-int iSendResult;
-int recvbuflen = DEFAULT_BUFLEN;
 int opt = 1;
-int master_socket;
-int new_socket;
-int activity;
-int i;
 int valread;
-int sd;
-int max_sd;
-int canMsgValue=0;
-int addrlen;
+socklen_t addrlen;
 struct sockaddr_in server;
 struct sockaddr_in client;
 
 fd_set readfds;
+fd_set activefds;
 
 HANDLE  hThread;
 //PMYDATA pData;
@@ -103,8 +98,8 @@ void BM_HAL_init()
     getaddrinfo(NULL, DEFAULT_PORT, &hints, &info);
 
     //create a Listen socket
-    ListenSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (ListenSocket == INVALID_SOCKET)
+    listenSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (listenSocket == INVALID_SOCKET)
     {
         printf("Error in initializing Listen socket! (%d)\n",
                 WSAGetLastError());
@@ -116,7 +111,7 @@ void BM_HAL_init()
     fflush(stdout);
 
     //set listen socket to allow multiple connections , this is just a good habit, it will work without this
-    iResult = setsockopt(ListenSocket, SOL_SOCKET, SO_REUSEADDR, (char*) &opt, sizeof(opt));
+    iResult = setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, (char*) &opt, sizeof(opt));
     if (iResult < 0)
     {
         printf("setsockopt error\n");
@@ -133,21 +128,21 @@ void BM_HAL_init()
     server.sin_port = htons(TELNET_PORT);
 
     //bind the socket to localhost port 8888
-    iResult = bind(ListenSocket, (struct sockaddr*) &server, sizeof(server));
+    iResult = bind(listenSocket, (struct sockaddr*) &server, sizeof(server));
     if (iResult < 0)
     {
         printf("(error) bind failed with error: %d\n", WSAGetLastError());
         fflush(stdout);
-        closesocket(ListenSocket);
+        closesocket(listenSocket);
         WSACleanup();
         return;
     }
     printf("(info) Listen socket bound to ip: localhost (127.0.0.1), port: %d\n", TELNET_PORT);
 
-    if (listen(ListenSocket, 3))
+    if (listen(listenSocket, 3))
     {
         printf("(error) listen failed with error: %d\n", WSAGetLastError());
-        closesocket(ListenSocket);
+        closesocket(listenSocket);
         WSACleanup();
         return;
     }
@@ -158,6 +153,12 @@ void BM_HAL_init()
     puts("Waiting for connections...\n");
     fflush(stdout);
 
+    /* Use the FD_ZERO routine to initialize the data structures
+     * (i.e., readfds, writefds, and exceptfds) */
+    FD_ZERO(&readfds);
+    /* Use FD_SET to add socket handles for reading to readfds */
+    FD_SET(listenSocket, &readfds);
+    maxSocket = listenSocket;
 
     //pData = (PMYDATA) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MYDATA));
 
@@ -398,99 +399,107 @@ void SystemClock_Config(void)
 #ifdef VIRTUAL_MCU
 DWORD WINAPI MyThreadFunction( LPVOID lpParam )
 {
+    SOCKET sd = 0; // socket descriptor
+    SOCKET newSocket = INVALID_SOCKET;
+
     while (1)
     {
-        /* Use the FD_ZERO routine to initialize the data structures
-         * (i.e., readfds, writefds, and exceptfds) */
-        FD_ZERO(&readfds);
-        /* Use FD_SET to add socket handles for reading to readfds */
-        FD_SET(ListenSocket, &readfds);
-        max_sd = ListenSocket;
+        activefds = readfds;
 
-        /* for (i = 0; i < max_clients; i++)
-         {
-         sd = client_socket[i];
-         if (sd > 0)
-         {
-         FD_SET(sd, &readfds);
-         }
-         if (sd > max_sd)
-         {
-         max_sd = sd;
-         }
-         }*/
-
-        activity = select(max_sd + 1, &readfds, NULL, NULL, NULL);
-        if (activity < 0) {
-            printf("select error\n");
+        if (select(FD_SETSIZE, &activefds, NULL, NULL, NULL) < 0)
+        {
+            printf("select error!\n");
+            exit(EXIT_FAILURE);
         }
 
-        /* FD_ISSET routine to check which sockets have pending I/O */
-        if (FD_ISSET(ListenSocket, &readfds)) {
-            new_socket = accept(ListenSocket, (struct sockaddr*) &client,
-                    (socklen_t*) &addrlen);
-            if (new_socket < 0) {
-                printf("accept error\n");
-                exit(EXIT_FAILURE);
-            }
-            FD_SET(new_socket, &readfds);
-            printf(
-                    "New connection, new socket descriptor is: %d, ip is: %s, port: %d\n",
-                    new_socket, inet_ntoa(client.sin_addr),
-                    ntohs(client.sin_port));
-            fflush(stdout);
-        }
-
-        for (i = 0; i < max_clients; i++) {
-            if (client_socket[i] == 0) {
-                client_socket[i] = new_socket;
-                printf("Adding to list of sockets as %d\n", i);
-                fflush(stdout);
-                break;
-            }
-        }
-
-        for (i = 0; i < max_clients; i++) {
-            sd = client_socket[i];
-            if (FD_ISSET(sd, &readfds)) {
-                valread = recv(sd, rxBuff, sizeof(rxBuff), 0);
-                if (valread < 0) {
-                    printf("Error in receiving data %d\n", WSAGetLastError());
+        for(sd = 0; sd <= maxSocket; sd++)
+        {
+            // i from readfds will be set if there is something to read on that socket
+            if (FD_ISSET(sd, &activefds))
+            {
+                // if listenSocket is active that means there is a new socket waiting for connection
+                if(sd == listenSocket)
+                {
+                    newSocket = acceptNewConnection(listenSocket);
+                    FD_SET(newSocket, &readfds);
+                    printf("New connection, new socket descriptor is: %d, ip is: %s, port: %d\n",
+                            newSocket, inet_ntoa(client.sin_addr), ntohs(client.sin_port));
                     fflush(stdout);
+
+                    maxSocket = (newSocket > maxSocket) ? newSocket : maxSocket;
+
                 }
-                if (valread == 0) {
-                    getpeername(sd, info->ai_addr, info->ai_addrlen);
-                    printf("Host disconnected\n");
-                    fflush(stdout);
-                    close(sd);
-                    client_socket[i] = 0;
-                } else {
-                    if (strstr(rxBuff, "REQ") != NULL) {
-                        strncpy(req_buff, rxBuff, 10);
-                        if (strstr(req_buff, "CAN")) {
-                            iResult = send(sd, canMessage,
-                                    (int) strlen(canMessage), 0);
-                            if (iResult == SOCKET_ERROR) {
-                                printf("send failed with error: %d\n",
-                                        WSAGetLastError());
-                                closesocket(sd);
-                                WSACleanup();
-                                return 1;
-                            }
-                        }
-                        //                      printf("%s", req_buff);
-                    } else {
-                        strcpy(canMessage, rxBuff);
-                        canMsgValue = stringToHex(canMessage);
-                        printf("0x%x", canMsgValue);
-                    }
-                    //send(sd, rxBuff, strlen(rxBuff), 0);
+                else
+                {
+                    // some other socket is activated, and it needs to be handled
+                    handleSocketRead(sd);
                 }
             }
         }
     }
 }
 
+static SOCKET acceptNewConnection(SOCKET listen_socket)
+{
+    SOCKET new_socket = INVALID_SOCKET;
+    // accept the connection
+    new_socket = accept(listen_socket, (struct sockaddr*) &client, &addrlen);
+    if (new_socket < 0)
+    {
+        printf("accept error\n");
+        exit(EXIT_FAILURE);
+    }
+    return new_socket;
+}
+
+static void handleSocketRead(SOCKET socket_descriptor)
+{
+    static uint8_t error_counter = 0u;
+    valread = recv(socket_descriptor, rxBuff, sizeof(rxBuff), 0);
+    if (0 > valread)
+    {
+        error_counter++;
+        if(error_counter > 10)
+        {
+            error_counter = 0u;
+            FD_CLR(socket_descriptor, &readfds);
+        }
+        printf("Error in receiving data %d\n", WSAGetLastError());
+        fflush(stdout);
+    }
+    else if (0 == valread)
+    {
+        getpeername(socket_descriptor, info->ai_addr, info->ai_addrlen);
+        printf("Host disconnected\n");
+        fflush(stdout);
+        FD_CLR(socket_descriptor, &readfds);
+    }
+    else
+    {
+        printf("Message received: %s\n", rxBuff);
+        fflush(stdout);
+        if (strstr(rxBuff, "REQ") != NULL)
+        {
+            strncpy(req_buff, rxBuff, 10);
+            if (strstr(req_buff, "CAN"))
+            {
+                iResult = send(socket_descriptor, canMessage, (int) strlen(canMessage), 0);
+                if (iResult == SOCKET_ERROR)
+                {
+                    printf("send failed with error: %d\n", WSAGetLastError());
+                    fflush(stdout);
+                    closesocket(socket_descriptor);
+                    WSACleanup();
+                    return;
+                }
+            }
+        }
+        else
+        {
+        }
+        //send(socket_descriptor, rxBuff, strlen(rxBuff), 0);
+    }
+}
 #endif
 
 int stringToHex(char *inputString)

@@ -56,6 +56,7 @@ CAN_HandleTypeDef hcan;
 #include <ws2tcpip.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <tchar.h>
 
 #define WIN32_LEAN_AND_MEAN
