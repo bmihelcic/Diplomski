@@ -56,6 +56,7 @@ CAN_HandleTypeDef hcan;
 #include <ws2tcpip.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <tchar.h>
 
 #define WIN32_LEAN_AND_MEAN
 #define DEFAULT_BUFLEN 100
@@ -69,6 +70,8 @@ typedef enum ERRORS{
 
 int stringToHex(char*);
 int hexCharToDec(char, ERROR_E*);
+
+DWORD WINAPI MyThreadFunction( LPVOID lpParam );
 
 #endif
 

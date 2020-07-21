@@ -16,6 +16,7 @@ static void MX_CAN_Init(void);
 static void MX_USART1_UART_Init(void);
 #endif
 
+#ifdef VIRTUAL_MCU
 const int max_clients = 10;
 char rxBuff[1024] =
 { 0 };
@@ -32,7 +33,7 @@ WSADATA wsaData;
 SOCKET ListenSocket = INVALID_SOCKET;
 SOCKET ClientSocket = INVALID_SOCKET;
 
-struct addrinfo *result = NULL;
+struct addrinfo *info = NULL;
 struct addrinfo hints;
 
 char recvbuf[DEFAULT_BUFLEN];
@@ -55,6 +56,10 @@ struct sockaddr_in client;
 
 fd_set readfds;
 
+HANDLE  hThread;
+//PMYDATA pData;
+DWORD   dwThreadId;
+#endif
 
 
 void BM_HAL_init()
@@ -72,7 +77,7 @@ void BM_HAL_init()
     printf("(info) Initialising Winsock...\n");
     fflush(stdout);
     iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (result != 0)
+    if (iResult != 0)
     {
         printf("(error) WSAStartup failed with error: %d\n", iResult);
         fflush(stdout);
@@ -90,12 +95,12 @@ void BM_HAL_init()
 
     /* getaddrinfo()
      * Resolve the server address (DNS) and port
-     *  return a pointer to a linked list of addrinfo structs (result)
+     *  return a pointer to a linked list of addrinfo structs (info)
      *
      *  addrinfo: holds information about protocol being used,
      *  socket type, IPv4 or IPv6, ip address, etc...
      */
-    getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);
+    getaddrinfo(NULL, DEFAULT_PORT, &hints, &info);
 
     //create a Listen socket
     ListenSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -111,8 +116,8 @@ void BM_HAL_init()
     fflush(stdout);
 
     //set listen socket to allow multiple connections , this is just a good habit, it will work without this
-    if (setsockopt(ListenSocket, SOL_SOCKET, SO_REUSEADDR, (char*) &opt,
-            sizeof(opt)) < 0)
+    iResult = setsockopt(ListenSocket, SOL_SOCKET, SO_REUSEADDR, (char*) &opt, sizeof(opt));
+    if (iResult < 0)
     {
         printf("setsockopt error\n");
         fflush(stdout);
@@ -128,7 +133,8 @@ void BM_HAL_init()
     server.sin_port = htons(TELNET_PORT);
 
     //bind the socket to localhost port 8888
-    if (bind(ListenSocket, (struct sockaddr*) &server, sizeof(server)) < 0)
+    iResult = bind(ListenSocket, (struct sockaddr*) &server, sizeof(server));
+    if (iResult < 0)
     {
         printf("(error) bind failed with error: %d\n", WSAGetLastError());
         fflush(stdout);
@@ -136,9 +142,7 @@ void BM_HAL_init()
         WSACleanup();
         return;
     }
-    printf(
-            "(info) Listen socket bound to ip: localhost (127.0.0.1), port: %d\n",
-            TELNET_PORT);
+    printf("(info) Listen socket bound to ip: localhost (127.0.0.1), port: %d\n", TELNET_PORT);
 
     if (listen(ListenSocket, 3))
     {
@@ -153,6 +157,22 @@ void BM_HAL_init()
     addrlen = sizeof(client);
     puts("Waiting for connections...\n");
     fflush(stdout);
+
+
+    //pData = (PMYDATA) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MYDATA));
+
+    hThread = CreateThread(
+        NULL,                   // default security attributes
+        0,                      // use default stack size
+        MyThreadFunction,       // thread function name
+        NULL,                  // argument to thread function
+        0,                      // use default creation flags
+        &dwThreadId);           // returns the thread identifier
+
+    if (hThread == NULL)
+    {
+       ExitProcess(3);
+    }
 #endif
 }
 
@@ -374,6 +394,105 @@ void SystemClock_Config(void)
 }
 #endif
 
+
+#ifdef VIRTUAL_MCU
+DWORD WINAPI MyThreadFunction( LPVOID lpParam )
+{
+    while (1)
+    {
+        /* Use the FD_ZERO routine to initialize the data structures
+         * (i.e., readfds, writefds, and exceptfds) */
+        FD_ZERO(&readfds);
+        /* Use FD_SET to add socket handles for reading to readfds */
+        FD_SET(ListenSocket, &readfds);
+        max_sd = ListenSocket;
+
+        /* for (i = 0; i < max_clients; i++)
+         {
+         sd = client_socket[i];
+         if (sd > 0)
+         {
+         FD_SET(sd, &readfds);
+         }
+         if (sd > max_sd)
+         {
+         max_sd = sd;
+         }
+         }*/
+
+        activity = select(max_sd + 1, &readfds, NULL, NULL, NULL);
+        if (activity < 0) {
+            printf("select error\n");
+        }
+
+        /* FD_ISSET routine to check which sockets have pending I/O */
+        if (FD_ISSET(ListenSocket, &readfds)) {
+            new_socket = accept(ListenSocket, (struct sockaddr*) &client,
+                    (socklen_t*) &addrlen);
+            if (new_socket < 0) {
+                printf("accept error\n");
+                exit(EXIT_FAILURE);
+            }
+            FD_SET(new_socket, &readfds);
+            printf(
+                    "New connection, new socket descriptor is: %d, ip is: %s, port: %d\n",
+                    new_socket, inet_ntoa(client.sin_addr),
+                    ntohs(client.sin_port));
+            fflush(stdout);
+        }
+
+        for (i = 0; i < max_clients; i++) {
+            if (client_socket[i] == 0) {
+                client_socket[i] = new_socket;
+                printf("Adding to list of sockets as %d\n", i);
+                fflush(stdout);
+                break;
+            }
+        }
+
+        for (i = 0; i < max_clients; i++) {
+            sd = client_socket[i];
+            if (FD_ISSET(sd, &readfds)) {
+                valread = recv(sd, rxBuff, sizeof(rxBuff), 0);
+                if (valread < 0) {
+                    printf("Error in receiving data %d\n", WSAGetLastError());
+                    fflush(stdout);
+                }
+                if (valread == 0) {
+                    getpeername(sd, info->ai_addr, info->ai_addrlen);
+                    printf("Host disconnected\n");
+                    fflush(stdout);
+                    close(sd);
+                    client_socket[i] = 0;
+                } else {
+                    if (strstr(rxBuff, "REQ") != NULL) {
+                        strncpy(req_buff, rxBuff, 10);
+                        if (strstr(req_buff, "CAN")) {
+                            iResult = send(sd, canMessage,
+                                    (int) strlen(canMessage), 0);
+                            if (iResult == SOCKET_ERROR) {
+                                printf("send failed with error: %d\n",
+                                        WSAGetLastError());
+                                closesocket(sd);
+                                WSACleanup();
+                                return 1;
+                            }
+                        }
+                        //                      printf("%s", req_buff);
+                    } else {
+                        strcpy(canMessage, rxBuff);
+                        canMsgValue = stringToHex(canMessage);
+                        printf("0x%x", canMsgValue);
+                    }
+                    //send(sd, rxBuff, strlen(rxBuff), 0);
+                }
+            }
+        }
+    }
+}
+
+#endif
+
 int stringToHex(char *inputString)
 {
     int i;
@@ -397,7 +516,6 @@ int stringToHex(char *inputString)
     }
     return result;
 }
-
 
 int hexCharToDec(char c, ERROR_E *error)
 {
