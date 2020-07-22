@@ -37,7 +37,6 @@ char canMessage[64] =
 { 0 };
 char req_buff[10] =
 { 0 };
-char *message = "Greeting message";
 
 WSADATA wsaData;
 
@@ -186,13 +185,10 @@ void BM_HAL_init()
             0,                      // use default creation flags
             &dwThreadId[1]);           // returns the thread identifier
 
-    for(int thrd=0; thrd < 2; thrd++)
-    {
-        if (hThread[thrd] == NULL)
+        if (NULL == hThread[0] || NULL == hThread[1])
         {
            ExitProcess(3);
         }
-    }
 #endif
 }
 
@@ -461,7 +457,7 @@ static DWORD WINAPI serverTalkThread( LPVOID lpParam )
 {
     int result = 0;
     SOCKET sd = 0; // socket descriptor
-    char send_message[25] = {0};
+    char send_message[35] = {0};
 
     while(1)
     {
@@ -473,13 +469,14 @@ static DWORD WINAPI serverTalkThread( LPVOID lpParam )
             send_message[14] = (1 == outputPort[1]) ? '1' : 'N';
             send_message[15] = (1 == outputPort[2]) ? '1' : 'N';
             send_message[16] = (1 == outputPort[3]) ? '1' : 'N';
+            send_message[17] = '\0';
             // readfds.fd_array[0] is listen socket
-            printf("send_message: %s\n", send_message);
+            printf("< sending: %s\n", send_message);
             fflush(stdout);
             for(int j=1; j < readfds.fd_count; j++)
             {
                 sd = readfds.fd_array[j];
-                result = send(sd, send_message, (int) strlen(send_message), 0);
+                result = send(sd, send_message, (int) strlen(send_message)+1, 0);
                 if (result == SOCKET_ERROR)
                 {
                     printf("send failed with error: %d\n", WSAGetLastError());
@@ -535,7 +532,7 @@ static void handleSocketRead(SOCKET socket_descriptor)
     }
     else
     {
-        printf("Message received: %s\n", rxBuff);
+        printf("> received: %s\n", rxBuff);
         fflush(stdout);
         /*
          * check if received message is for example "SET INPUT0 HIGH"
@@ -544,18 +541,18 @@ static void handleSocketRead(SOCKET socket_descriptor)
         strPtr = strstr(rxBuff, "SET INPUT");
         if (strPtr != NULL)
         {
-            strPtr += 9;
-            strncpy(&index, strPtr, 1);
-            index -= 48;
+            strPtr += 9;                    // expecting pin number at this place in message (0 or 1)
+            strncpy(&index, strPtr, 1);     // copy that number (char) to index
+            index -= 48;                    // get a number from that ascii char
             if(0 <= index && index <= 3)
             {
                 if(strstr(rxBuff, "HIGH"))
                 {
-                    inputPort[index] = GPIO_HIGH;
+                    inputPort[index] = BM_GPIO_HIGH;
                 }
                 else
                 {
-                    inputPort[index] = GPIO_LOW;
+                    inputPort[index] = BM_GPIO_LOW;
                 }
             }
 

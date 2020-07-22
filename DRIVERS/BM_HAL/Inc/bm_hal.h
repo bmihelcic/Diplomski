@@ -59,6 +59,16 @@ CAN_HandleTypeDef hcan;
 #include <stdint.h>
 #include <tchar.h>
 
+
+#define OUTPUT0_Pin LL_GPIO_PIN_0
+#define OUTPUT0_GPIO_Port GPIOA
+#define OUTPUT1_Pin LL_GPIO_PIN_1
+#define OUTPUT1_GPIO_Port GPIOA
+#define OUTPUT2_Pin LL_GPIO_PIN_2
+#define OUTPUT2_GPIO_Port GPIOA
+#define OUTPUT3_Pin LL_GPIO_PIN_3
+#define OUTPUT3_GPIO_Port GPIOA
+
 #define WIN32_LEAN_AND_MEAN
 #define DEFAULT_BUFLEN 100
 #define DEFAULT_PORT "27015"

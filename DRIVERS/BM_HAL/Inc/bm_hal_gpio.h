@@ -14,8 +14,6 @@
 //#elif defined(VIRTUAL_MCU)
 #include <stdint.h>
 
-//#define GPIOA (0u)
-//#define GPIOB (1u)
 #define LL_GPIO_PIN_0 (0u)
 #define LL_GPIO_PIN_1 (1u)
 #define LL_GPIO_PIN_2 (2u)
@@ -27,8 +25,8 @@
 
 typedef enum
 {
-  GPIO_LOW = 0u,
-  GPIO_HIGH
+  BM_GPIO_LOW = 0u,
+  BM_GPIO_HIGH
 } BM_HAL_GPIO_pin_state_t;
 
 
