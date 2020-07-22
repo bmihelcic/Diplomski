@@ -39,8 +39,6 @@ SOCKET maxSocket    = INVALID_SOCKET;
 struct addrinfo *info = NULL;
 struct addrinfo hints;
 
-char recvbuf[DEFAULT_BUFLEN];
-
 int iResult;
 int opt = 1;
 int valread;

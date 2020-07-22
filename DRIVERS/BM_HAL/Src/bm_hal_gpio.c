@@ -11,6 +11,9 @@
 #endif
 
 
+int outputPort[4] = {0};
+int inputPort[4] = {0};
+
 /**
   * @brief  Get the level of a pin configured in input mode
   * @param  GPIOx: where x can be (A..G depending on device used) to select the GPIO peripheral
@@ -34,11 +37,12 @@
   *         @arg @ref LL_GPIO_PIN_ALL
   * @retval The input pin state, see BM_HAL_GPIO_pin_state_t.
   */
-BM_HAL_GPIO_pin_state_t BM_HAL_GPIO_digitalRead(GPIO_TypeDef *GPIOx, uint32_t PinMask)
+BM_HAL_GPIO_pin_state_t BM_HAL_GPIO_digitalRead(GPIO_TypeDef *GPIOx, uint32_t pin_mask)
 {
 	BM_HAL_GPIO_pin_state_t pin_value;
 
-	if ((LL_GPIO_ReadInputPort(GPIOx) & ((PinMask >> GPIO_PIN_MASK_POS) & 0x0000FFFFU)) != (uint32_t)GPIO_LOW)
+#ifdef STM32
+	if ((LL_GPIO_ReadInputPort(GPIOx) & ((pin_mask >> GPIO_PIN_MASK_POS) & 0x0000FFFFU)) != (uint32_t)GPIO_LOW)
 	{
 		pin_value = GPIO_HIGH;
 	}
@@ -46,6 +50,7 @@ BM_HAL_GPIO_pin_state_t BM_HAL_GPIO_digitalRead(GPIO_TypeDef *GPIOx, uint32_t Pi
 	{
 		pin_value = GPIO_LOW;
 	}
+#endif
 	return pin_value;
 }
 
@@ -78,16 +83,29 @@ BM_HAL_GPIO_pin_state_t BM_HAL_GPIO_digitalRead(GPIO_TypeDef *GPIOx, uint32_t Pi
   *            @arg GPIO_HIGH: to set the port pin
   * @retval None
   */
-void BM_HAL_GPIO_digitalWrite(GPIO_TypeDef *GPIOx, uint32_t PinMask, BM_HAL_GPIO_pin_state_t pin_state)
+void BM_HAL_GPIO_digitalWrite(GPIO_TypeDef *GPIOx, uint32_t pin_mask, BM_HAL_GPIO_pin_state_t pin_state)
 {
-	if (pin_state != GPIO_LOW)
-	{
-		LL_GPIO_SetOutputPin(GPIOx, PinMask);
-	}
-	else
-	{
-		LL_GPIO_ResetOutputPin(GPIOx, PinMask);
-	}
+#ifdef STM32
+    if (pin_state != GPIO_LOW)
+    {
+        LL_GPIO_SetOutputPin(GPIOx, pin_mask);
+    }
+    else
+    {
+        LL_GPIO_ResetOutputPin(GPIOx, pin_mask);
+    }
+#elif defined(VIRTUAL_MCU)
+    if (pin_state != GPIO_LOW)
+    {
+        outputPort[pin_mask] = GPIO_HIGH;
+
+    }
+    else
+    {
+        outputPort[pin_mask] = GPIO_LOW;
+    }
+
+#endif
 }
 
 /**
@@ -113,7 +131,9 @@ void BM_HAL_GPIO_digitalWrite(GPIO_TypeDef *GPIOx, uint32_t PinMask, BM_HAL_GPIO
   *         @arg @ref LL_GPIO_PIN_ALL
   * @retval None
   */
-void BM_HAL_GPIO_TogglePin(GPIO_TypeDef *GPIOx, uint32_t PinMask)
+void BM_HAL_GPIO_TogglePin(GPIO_TypeDef *GPIOx, uint32_t pin_mask)
 {
-	LL_GPIO_TogglePin(GPIOx, PinMask);
+#ifdef STM32
+	LL_GPIO_TogglePin(GPIOx, pin_mask);
+#endif
 }
