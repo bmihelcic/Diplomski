@@ -541,9 +541,9 @@ static void handleSocketRead(SOCKET socket_descriptor)
         strPtr = strstr(rxBuff, "SET INPUT");
         if (strPtr != NULL)
         {
-            strPtr += 9;                    // expecting pin number at this place in message (0 or 1)
+            strPtr += 9;                           // expecting pin number at this place in message (0 or 1)
             strncpy((char*)&index, strPtr, 1);     // copy that number (char) to index
-            index -= 48;                    // get a number from that ascii char
+            index -= 48;                           // get a number from that ascii char
             if(0 <= index && index <= 3)
             {
                 if(strstr(rxBuff, "HIGH"))
@@ -555,8 +555,17 @@ static void handleSocketRead(SOCKET socket_descriptor)
                     inputPort[index] = BM_GPIO_LOW;
                 }
             }
+        }
+        /*
+         * ADC messages handling
+         * e.g. SET ADC0 1024
+         */
+        strPtr = strstr(rxBuff, "SET ADC");
+        if (strPtr != NULL)
+        {
 
         }
+
 //        if (strstr(rxBuff, "REQ") != NULL)
 //        {
 //            strncpy(req_buff, rxBuff, 10);
