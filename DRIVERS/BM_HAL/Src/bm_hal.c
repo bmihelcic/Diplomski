@@ -50,7 +50,7 @@ struct addrinfo hints;
 int iResult;
 int opt = 1;
 int valread;
-socklen_t addrlen;
+int addrlen;
 struct sockaddr_in server;
 struct sockaddr_in client;
 
@@ -101,7 +101,7 @@ void BM_HAL_init()
      *  addrinfo: holds information about protocol being used,
      *  socket type, IPv4 or IPv6, ip address, etc...
      */
-    getaddrinfo(NULL, DEFAULT_PORT, &hints, &info);
+    getaddrinfo(NULL, DEFAULT_PORT_STR, &hints, &info);
 
     //create a Listen socket
     listenSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -131,9 +131,9 @@ void BM_HAL_init()
     server.sin_family = AF_INET;
     server.sin_addr.S_un.S_addr = INADDR_ANY;
     server.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
-    server.sin_port = htons(TELNET_PORT);
+    server.sin_port = htons(DEFAULT_PORT);
 
-    //bind the socket to localhost port 8888
+    //bind the socket to localhost port 8080
     iResult = bind(listenSocket, (struct sockaddr*) &server, sizeof(server));
     if (iResult < 0)
     {
@@ -143,7 +143,7 @@ void BM_HAL_init()
         WSACleanup();
         return;
     }
-    printf("(info) Listen socket bound to ip: localhost (127.0.0.1), port: %d\n", TELNET_PORT);
+    printf("(info) Listen socket bound to ip: localhost (127.0.0.1), port: %d\n", DEFAULT_PORT);
 
     if (listen(listenSocket, 3))
     {
@@ -152,7 +152,7 @@ void BM_HAL_init()
         WSACleanup();
         return;
     }
-    printf("I'm listening on port %d\n", TELNET_PORT);
+    printf("I'm listening on port %d\n", DEFAULT_PORT);
     fflush(stdout);
 
     addrlen = sizeof(client);
@@ -451,6 +451,7 @@ static DWORD WINAPI serverListenThread( LPVOID lpParam )
             }
         }
     }
+    return 0;
 }
 
 static DWORD WINAPI serverTalkThread( LPVOID lpParam )
@@ -488,7 +489,7 @@ static DWORD WINAPI serverTalkThread( LPVOID lpParam )
             }
         }
     }
-
+    return 0;
 }
 
 static SOCKET acceptNewConnection(SOCKET listen_socket)
@@ -507,7 +508,6 @@ static SOCKET acceptNewConnection(SOCKET listen_socket)
 static void handleSocketRead(SOCKET socket_descriptor)
 {
     static uint8_t error_counter = 0u;
-    char commandBuf[50] = {0};
     char* strPtr;
     int index = 0;
 
@@ -525,7 +525,7 @@ static void handleSocketRead(SOCKET socket_descriptor)
     }
     else if (0 == valread)
     {
-        getpeername(socket_descriptor, info->ai_addr, info->ai_addrlen);
+        getpeername(socket_descriptor, info->ai_addr, (int*)&(info->ai_addrlen));
         printf("Host disconnected\n");
         fflush(stdout);
         FD_CLR(socket_descriptor, &readfds);
@@ -542,7 +542,7 @@ static void handleSocketRead(SOCKET socket_descriptor)
         if (strPtr != NULL)
         {
             strPtr += 9;                    // expecting pin number at this place in message (0 or 1)
-            strncpy(&index, strPtr, 1);     // copy that number (char) to index
+            strncpy((char*)&index, strPtr, 1);     // copy that number (char) to index
             index -= 48;                    // get a number from that ascii char
             if(0 <= index && index <= 3)
             {

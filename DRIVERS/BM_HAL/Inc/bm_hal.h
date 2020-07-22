@@ -58,6 +58,7 @@ CAN_HandleTypeDef hcan;
 #include <stdio.h>
 #include <stdint.h>
 #include <tchar.h>
+#include <math.h>
 
 
 #define OUTPUT0_Pin LL_GPIO_PIN_0
@@ -70,9 +71,8 @@ CAN_HandleTypeDef hcan;
 #define OUTPUT3_GPIO_Port GPIOA
 
 #define WIN32_LEAN_AND_MEAN
-#define DEFAULT_BUFLEN 100
-#define DEFAULT_PORT "27015"
-#define TELNET_PORT (8888)
+#define DEFAULT_PORT_STR        "8080"
+#define DEFAULT_PORT            (8080)
 
 typedef enum ERRORS{
     ERROR_OK,
