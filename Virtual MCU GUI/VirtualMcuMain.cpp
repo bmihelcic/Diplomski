@@ -190,15 +190,9 @@ void VirtualMcuMain::OnSliderUpdate(wxScrollEvent& evt)
 		if (slider_value != slider_value_prev0)
 		{
 			voltage = slider_value * (MCU_NOMINAL_VOLTAGE / (ADC_MAX_VALUE + 1));
-			adc_voltage_label_0->SetLabel(wxString::Format("%.2f V", voltage));
-			if (m_socket != nullptr && m_socket->IsConnected())
-			{
-				socket_message = wxString("SET ADC0 " + wxString::Format("%.2f", voltage));
-				m_console_output->AppendText("< sending: ");
-				m_console_output->AppendText(socket_message);
-				m_console_output->Newline();
-				slider_value_prev0 = slider_value;
-			}
+			adc_voltage_label_0->SetLabel(wxString::Format("%.2f V", voltage));			
+			socket_message = wxString("SET ADC0 " + wxString::Format("%.2f", voltage));
+			slider_value_prev0 = slider_value;
 		}
 	}
 	else if(ID_slider_1 == current_slider_ID)
@@ -208,16 +202,17 @@ void VirtualMcuMain::OnSliderUpdate(wxScrollEvent& evt)
 		{
 			voltage = slider_value * (MCU_NOMINAL_VOLTAGE / (ADC_MAX_VALUE + 1));
 			adc_voltage_label_1->SetLabel(wxString::Format("%.2f V", voltage));;
-			if (m_socket != nullptr && m_socket->IsConnected())
-			{
-				socket_message = wxString("SET ADC1 " + wxString::Format("%.2f", voltage));
-				m_console_output->AppendText("< sending: ");
-				m_console_output->AppendText(socket_message);
-				m_console_output->Newline();
-				slider_value_prev1 = slider_value;
-			}
+			socket_message = wxString("SET ADC1 " + wxString::Format("%.2f", voltage));
+			slider_value_prev1 = slider_value;
 		}		
 	}
+	m_console_output->AppendText("< sending: ");
+	m_console_output->AppendText(socket_message);
+	m_console_output->Newline();
+	if (m_socket != nullptr && m_socket->IsConnected())
+	{
+		m_socket->Write(socket_message, sizeof(socket_message));
+	}	
 	evt.Skip();
 }
 
