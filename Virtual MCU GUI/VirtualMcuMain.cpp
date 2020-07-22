@@ -2,16 +2,16 @@
 #include <string>
 
 wxBEGIN_EVENT_TABLE(VirtualMcuMain, wxFrame)
-	EVT_BUTTON(ID_output_0, OnButtonClick)
-	EVT_BUTTON(ID_output_1, OnButtonClick)
-	EVT_BUTTON(ID_output_2, OnButtonClick)
-	EVT_BUTTON(ID_output_3, OnButtonClick)
-	EVT_BUTTON(ID_input_0, OnButtonClick)
-	EVT_BUTTON(ID_input_1, OnButtonClick)
-	EVT_BUTTON(ID_input_2, OnButtonClick)
-	EVT_BUTTON(ID_input_3, OnButtonClick)
-	EVT_SLIDER(ID_slider_0, OnSliderUpdate)
-	EVT_SLIDER(ID_slider_1, OnSliderUpdate)
+	EVT_BUTTON(ID_output_0, VirtualMcuMain::OnButtonClick)
+	EVT_BUTTON(ID_output_1, VirtualMcuMain::OnButtonClick)
+	EVT_BUTTON(ID_output_2, VirtualMcuMain::OnButtonClick)
+	EVT_BUTTON(ID_output_3, VirtualMcuMain::OnButtonClick)
+	EVT_BUTTON(ID_input_0, VirtualMcuMain::OnButtonClick)
+	EVT_BUTTON(ID_input_1, VirtualMcuMain::OnButtonClick)
+	EVT_BUTTON(ID_input_2, VirtualMcuMain::OnButtonClick)
+	EVT_BUTTON(ID_input_3, VirtualMcuMain::OnButtonClick)
+	EVT_COMMAND_SCROLL_CHANGED(ID_slider_0, VirtualMcuMain::OnSliderUpdate)
+	EVT_COMMAND_SCROLL_CHANGED(ID_slider_0, VirtualMcuMain::OnSliderUpdate)
 	EVT_MENU(ID_CLIENT_CONNECT, VirtualMcuMain::OnConnectToServer)
 	EVT_SOCKET(ID_SOCKET, VirtualMcuMain::OnSocketEvent)
 wxEND_EVENT_TABLE()
@@ -63,7 +63,7 @@ VirtualMcuMain::VirtualMcuMain() : wxFrame(nullptr, wxID_ANY, "VIRTUAL MCU")
 	this->SetMenuBar(m_menu_bar);
 
 	m_console_output = new wxRichTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 | wxVSCROLL | wxHSCROLL | wxNO_BORDER | wxWANTS_CHARS);
-	m_console_output->Enable(false);
+	m_console_output->Enable(true);
 	wx_box_sizer_3->Add(m_console_output, 1, wxEXPAND | wxALL, 5);
 
 	
@@ -105,9 +105,9 @@ VirtualMcuMain::VirtualMcuMain() : wxFrame(nullptr, wxID_ANY, "VIRTUAL MCU")
 	adc_voltage_label_0 = new wxStaticText(this, wxID_ANY, wxT("1.65 V"), wxDefaultPosition, wxDefaultSize, 0);
 	adc_voltage_label_1 = new wxStaticText(this, wxID_ANY, wxT("1.65 V"), wxDefaultPosition, wxDefaultSize, 0);
 	adc_slider_0 = new wxSlider(this, ID_slider_0, 2047, 0, 4095, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL);
-	adc_slider_0->Bind(wxEVT_SLIDER, &VirtualMcuMain::OnSliderUpdate, this);
+	adc_slider_0->Bind(wxEVT_SCROLL_CHANGED, &VirtualMcuMain::OnSliderUpdate, this);
 	adc_slider_1 = new wxSlider(this, ID_slider_1, 2047, 0, 4095, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL);
-	adc_slider_1->Bind(wxEVT_SLIDER, &VirtualMcuMain::OnSliderUpdate, this);
+	adc_slider_1->Bind(wxEVT_SCROLL_CHANGED, &VirtualMcuMain::OnSliderUpdate, this);
 
 	wx_flex_grid_sizer_2_1->Add(adc_label_0, 0, wxALIGN_CENTER | wxALL, 5);
 	wx_flex_grid_sizer_2_1->Add(adc_slider_0, 1, wxEXPAND | wxALL, 5);
@@ -153,7 +153,7 @@ void VirtualMcuMain::OnButtonClick(wxCommandEvent& evt)
 		input_pin[current_button_ID - 4]->SetLabel(current_button_label);
 		current_button_ID_label = std::to_string(current_button_ID - 4);
 		socket_message = wxString("SET INPUT" + current_button_ID_label + " " + current_button_label);
-		m_console_output->WriteText(wxT("sending: " + socket_message));
+		m_console_output->WriteText(wxT("< sending: " + socket_message));
 		m_console_output->Newline();
 		m_socket->Write(socket_message, sizeof(socket_message));
 	}
@@ -161,25 +161,44 @@ void VirtualMcuMain::OnButtonClick(wxCommandEvent& evt)
 }
 
 
-void VirtualMcuMain::OnSliderUpdate(wxCommandEvent& evt)
+void VirtualMcuMain::OnSliderUpdate(wxScrollEvent& evt)
 {
 	int current_slider_ID = 0;
 	int slider_value = 0;
+	static int slider_value_prev0 = 0;
+	static int slider_value_prev1 = 0;
 	float voltage = 0.0;
+	wxString socket_message;
 
 	current_slider_ID = evt.GetId();
 
 	if (ID_slider_0 == current_slider_ID)
 	{
 		slider_value = adc_slider_0->GetValue();
-		voltage = slider_value * (MCU_NOMINAL_VOLTAGE / (ADC_MAX_VALUE + 1));
-		adc_voltage_label_0->SetLabel(wxString::Format("%.2f V", voltage));
+		if (slider_value != slider_value_prev0)
+		{
+			voltage = slider_value * (MCU_NOMINAL_VOLTAGE / (ADC_MAX_VALUE + 1));
+			adc_voltage_label_0->SetLabel(wxString::Format("%.2f V", voltage));
+			socket_message = wxString("SET ADC0 " + wxString::Format("%.2f", voltage));
+			m_console_output->AppendText("< sending: ");
+			m_console_output->AppendText(socket_message);
+			m_console_output->Newline();
+			slider_value_prev0 = slider_value;
+		}
 	}
 	else if(ID_slider_1 == current_slider_ID)
 	{
 		slider_value = adc_slider_1->GetValue();
-		voltage = slider_value * (MCU_NOMINAL_VOLTAGE / (ADC_MAX_VALUE + 1));
-		adc_voltage_label_1->SetLabel(wxString::Format("%.2f V", voltage));;
+		if (slider_value != slider_value_prev1)
+		{
+			voltage = slider_value * (MCU_NOMINAL_VOLTAGE / (ADC_MAX_VALUE + 1));
+			adc_voltage_label_1->SetLabel(wxString::Format("%.2f V", voltage));;
+			socket_message = wxString("SET ADC1 " + wxString::Format("%.2f", voltage));
+			m_console_output->AppendText("< sending: ");
+			m_console_output->AppendText(socket_message);
+			m_console_output->Newline();
+			slider_value_prev1 = slider_value;
+		}		
 	}
 	evt.Skip();
 }
@@ -188,7 +207,7 @@ void VirtualMcuMain::OnConnectToServer(wxCommandEvent& WXUNUSED(event))
 {
 	wxIPV4address addr;
 	addr.Hostname(wxT("localhost"));
-	addr.Service(8888);
+	addr.Service(54321);
 	// Create the socket
 	m_socket = new wxSocketClient();
 	// Set up the event handler and subscribe to most events
@@ -218,7 +237,7 @@ void VirtualMcuMain::OnSocketEvent(wxSocketEvent& event)
 		case wxSOCKET_INPUT:
 		{
 			sock->Read(buf, sizeof(buf));
-			m_console_output->AppendText("RECEIVED: ");
+			m_console_output->AppendText("> received: ");
 			m_console_output->AppendText(buf);
 			m_console_output->Newline();
 			wxBuf = wxString::Format("%s", buf);
@@ -251,6 +270,6 @@ void VirtualMcuMain::OnSocketEvent(wxSocketEvent& event)
 
 VirtualMcuMain::~VirtualMcuMain()
 {
-	m_socket->Destroy();
+	//m_socket->Destroy();
 }
 

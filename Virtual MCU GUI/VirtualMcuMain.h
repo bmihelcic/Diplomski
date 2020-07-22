@@ -3,6 +3,7 @@
 #include <wx/tglbtn.h>
 #include <wx/sckipc.h>
 #include <wx/richtext/richtextctrl.h>
+#include <wx/slider.h>
 
 #define MCU_NOMINAL_VOLTAGE (3.3f)
 #define ADC_MAX_VALUE (4095u)
@@ -12,8 +13,8 @@ class VirtualMcuMain : public wxFrame
 public:
 	VirtualMcuMain();
 	~VirtualMcuMain();
-	void OnButtonClick(wxCommandEvent &evt);
-	void OnSliderUpdate(wxCommandEvent& evt);
+	void OnButtonClick(wxCommandEvent& evt);
+	void OnSliderUpdate(wxScrollEvent& evt);
 	void OnConnectToServer(wxCommandEvent& evt);
 	void OnSocketEvent(wxSocketEvent& evt);
 
