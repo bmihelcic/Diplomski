@@ -6,6 +6,7 @@
  */
 
 #include "bm_hal.h"
+#include "bm_hal_gpio.h"
 
 
 #ifdef STM32
@@ -18,8 +19,16 @@ static void MX_USART1_UART_Init(void);
 
 #ifdef VIRTUAL_MCU
 
+static DWORD WINAPI serverListenThread( LPVOID lpParam );
+static DWORD WINAPI serverTalkThread( LPVOID lpParam );
 static SOCKET acceptNewConnection(SOCKET listen_socket);
 static void handleSocketRead(SOCKET socket_descriptor);
+
+
+extern int outputPort[4];
+extern int inputPort[4];
+
+extern int outputPortChange;
 
 
 char rxBuff[1024] =
@@ -49,9 +58,9 @@ struct sockaddr_in client;
 fd_set readfds;
 fd_set activefds;
 
-HANDLE  hThread;
-//PMYDATA pData;
-DWORD   dwThreadId;
+HANDLE  hThread[2];
+//PMYDATA pData[2];
+DWORD   dwThreadId[2];
 #endif
 
 
@@ -160,17 +169,29 @@ void BM_HAL_init()
 
     //pData = (PMYDATA) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MYDATA));
 
-    hThread = CreateThread(
-        NULL,                   // default security attributes
-        0,                      // use default stack size
-        MyThreadFunction,       // thread function name
-        NULL,                  // argument to thread function
-        0,                      // use default creation flags
-        &dwThreadId);           // returns the thread identifier
 
-    if (hThread == NULL)
+    hThread[0] = CreateThread(
+            NULL,                   // default security attributes
+            0,                      // use default stack size
+            serverListenThread,       // thread function name
+            NULL,                  // argument to thread function
+            0,                      // use default creation flags
+            &dwThreadId[0]);           // returns the thread identifier
+
+    hThread[1] = CreateThread(
+            NULL,                   // default security attributes
+            0,                      // use default stack size
+            serverTalkThread,       // thread function name
+            NULL,                  // argument to thread function
+            0,                      // use default creation flags
+            &dwThreadId[1]);           // returns the thread identifier
+
+    for(int thrd=0; thrd < 2; thrd++)
     {
-       ExitProcess(3);
+        if (hThread[thrd] == NULL)
+        {
+           ExitProcess(3);
+        }
     }
 #endif
 }
@@ -395,7 +416,7 @@ void SystemClock_Config(void)
 
 
 #ifdef VIRTUAL_MCU
-DWORD WINAPI MyThreadFunction( LPVOID lpParam )
+static DWORD WINAPI serverListenThread( LPVOID lpParam )
 {
     SOCKET sd = 0; // socket descriptor
     SOCKET newSocket = INVALID_SOCKET;
@@ -415,9 +436,9 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
             // i from readfds will be set if there is something to read on that socket
             if (FD_ISSET(sd, &activefds))
             {
-                // if listenSocket is active that means there is a new socket waiting for connection
                 if(sd == listenSocket)
                 {
+                    // listenSocket is active that means there is a new socket waiting for connection
                     newSocket = acceptNewConnection(listenSocket);
                     FD_SET(newSocket, &readfds);
                     printf("New connection, new socket descriptor is: %d, ip is: %s, port: %d\n",
@@ -425,7 +446,6 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
                     fflush(stdout);
 
                     maxSocket = (newSocket > maxSocket) ? newSocket : maxSocket;
-
                 }
                 else
                 {
@@ -435,6 +455,43 @@ DWORD WINAPI MyThreadFunction( LPVOID lpParam )
             }
         }
     }
+}
+
+static DWORD WINAPI serverTalkThread( LPVOID lpParam )
+{
+    int result = 0;
+    SOCKET sd = 0; // socket descriptor
+    char send_message[25] = {0};
+
+    while(1)
+    {
+        if(1 == outputPortChange)
+        {
+            outputPortChange = 0;
+            strcpy(send_message, "OUTPUT_STATE_");
+            send_message[13] = (1 == outputPort[0]) ? '1' : 'N';
+            send_message[14] = (1 == outputPort[1]) ? '1' : 'N';
+            send_message[15] = (1 == outputPort[2]) ? '1' : 'N';
+            send_message[16] = (1 == outputPort[3]) ? '1' : 'N';
+            // readfds.fd_array[0] is listen socket
+            printf("send_message: %s\n", send_message);
+            fflush(stdout);
+            for(int j=1; j < readfds.fd_count; j++)
+            {
+                sd = readfds.fd_array[j];
+                result = send(sd, send_message, (int) strlen(send_message), 0);
+                if (result == SOCKET_ERROR)
+                {
+                    printf("send failed with error: %d\n", WSAGetLastError());
+                    fflush(stdout);
+                    closesocket(sd);
+                    WSACleanup();
+                }
+
+            }
+        }
+    }
+
 }
 
 static SOCKET acceptNewConnection(SOCKET listen_socket)
@@ -453,6 +510,10 @@ static SOCKET acceptNewConnection(SOCKET listen_socket)
 static void handleSocketRead(SOCKET socket_descriptor)
 {
     static uint8_t error_counter = 0u;
+    char commandBuf[50] = {0};
+    char* strPtr;
+    int index = 0;
+
     valread = recv(socket_descriptor, rxBuff, sizeof(rxBuff), 0);
     if (0 > valread)
     {
@@ -476,22 +537,45 @@ static void handleSocketRead(SOCKET socket_descriptor)
     {
         printf("Message received: %s\n", rxBuff);
         fflush(stdout);
-        if (strstr(rxBuff, "REQ") != NULL)
+        /*
+         * check if received message is for example "SET INPUT0 HIGH"
+         * and then set the correct variable (in inputPort) to that value
+         */
+        strPtr = strstr(rxBuff, "SET INPUT");
+        if (strPtr != NULL)
         {
-            strncpy(req_buff, rxBuff, 10);
-            if (strstr(req_buff, "CAN"))
+            strPtr += 9;
+            strncpy(&index, strPtr, 1);
+            index -= 48;
+            if(0 <= index && index <= 3)
             {
-                iResult = send(socket_descriptor, canMessage, (int) strlen(canMessage), 0);
-                if (iResult == SOCKET_ERROR)
+                if(strstr(rxBuff, "HIGH"))
                 {
-                    printf("send failed with error: %d\n", WSAGetLastError());
-                    fflush(stdout);
-                    closesocket(socket_descriptor);
-                    WSACleanup();
-                    return;
+                    inputPort[index] = GPIO_HIGH;
+                }
+                else
+                {
+                    inputPort[index] = GPIO_LOW;
                 }
             }
+
         }
+//        if (strstr(rxBuff, "REQ") != NULL)
+//        {
+//            strncpy(req_buff, rxBuff, 10);
+//            if (strstr(req_buff, "CAN"))
+//            {
+//                iResult = send(socket_descriptor, canMessage, (int) strlen(canMessage), 0);
+//                if (iResult == SOCKET_ERROR)
+//                {
+//                    printf("send failed with error: %d\n", WSAGetLastError());
+//                    fflush(stdout);
+//                    closesocket(socket_descriptor);
+//                    WSACleanup();
+//                    return;
+//                }
+//            }
+//        }
         else
         {
         }
@@ -503,7 +587,6 @@ static void handleSocketRead(SOCKET socket_descriptor)
 int stringToHex(char *inputString)
 {
     int i;
-    char temp;
     int result = 0;
     int n = strlen(inputString)-2;  //how many digits w/o the 1st two (0x)
     int exp=n;

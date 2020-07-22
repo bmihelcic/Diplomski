@@ -72,8 +72,6 @@ typedef enum ERRORS{
 int stringToHex(char*);
 int hexCharToDec(char, ERROR_E*);
 
-DWORD WINAPI MyThreadFunction( LPVOID lpParam );
-
 #endif
 
 
