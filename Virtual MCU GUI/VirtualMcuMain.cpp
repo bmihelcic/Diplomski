@@ -207,7 +207,7 @@ void VirtualMcuMain::OnConnectToServer(wxCommandEvent& WXUNUSED(event))
 {
 	wxIPV4address addr;
 	addr.Hostname(wxT("localhost"));
-	addr.Service(54321);
+	addr.Service(8080);
 	// Create the socket
 	m_socket = new wxSocketClient();
 	// Set up the event handler and subscribe to most events
@@ -216,7 +216,7 @@ void VirtualMcuMain::OnConnectToServer(wxCommandEvent& WXUNUSED(event))
 	m_socket->Notify(true);
 	// Wait for the connection event
 	m_socket->Connect(addr, false);
-	m_console_output->WriteText(wxT("(info) Connecting to localhost:8888"));
+	m_console_output->WriteText(wxT("(info) Connecting to localhost:8080"));
 	m_console_output->Newline();
 }
 
@@ -270,6 +270,10 @@ void VirtualMcuMain::OnSocketEvent(wxSocketEvent& event)
 
 VirtualMcuMain::~VirtualMcuMain()
 {
-	//m_socket->Destroy();
+	// if socket has been initialized
+	if (m_socket->IsOk())
+	{
+		m_socket->Destroy();
+	}
 }
 
