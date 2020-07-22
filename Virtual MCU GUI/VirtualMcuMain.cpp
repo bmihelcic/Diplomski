@@ -1,4 +1,5 @@
 #include "VirtualMcuMain.h"
+#include <string>
 
 wxBEGIN_EVENT_TABLE(VirtualMcuMain, wxFrame)
 	EVT_BUTTON(ID_output_0, OnButtonClick)
@@ -134,15 +135,11 @@ void VirtualMcuMain::OnButtonClick(wxCommandEvent& evt)
 	int current_button_ID = 0;
 	bool current_button_state = false;
 	wxString current_button_label;
+	wxString current_button_ID_label;
+	wxString socket_message;
 
 	current_button_ID = evt.GetId() - wxID_HIGHEST; // gives 0-7
 
-	if (0 == current_button_ID)
-	{
-		// if button 0 was pressed
-
-
-	}
 	if (current_button_ID < 4)
 	{
 		current_button_state = output_pin[current_button_ID]->GetValue();
@@ -151,9 +148,14 @@ void VirtualMcuMain::OnButtonClick(wxCommandEvent& evt)
 	}
 	else
 	{
-		current_button_state = input_pin[current_button_ID-4]->GetValue();
+		current_button_state = input_pin[current_button_ID - 4]->GetValue();
 		current_button_label = ((true == current_button_state) ? "HIGH" : "LOW");
-		input_pin[current_button_ID-4]->SetLabel(current_button_label);
+		input_pin[current_button_ID - 4]->SetLabel(current_button_label);
+		current_button_ID_label = std::to_string(current_button_ID - 4);
+		socket_message = wxString("SET INPUT" + current_button_ID_label + " " + current_button_label);
+		m_console_output->WriteText(wxT("sending: " + socket_message));
+		m_console_output->Newline();
+		m_socket->Write(socket_message, sizeof(socket_message));
 	}
 	evt.Skip();
 }
@@ -188,13 +190,13 @@ void VirtualMcuMain::OnConnectToServer(wxCommandEvent& WXUNUSED(event))
 	addr.Hostname(wxT("localhost"));
 	addr.Service(8888);
 	// Create the socket
-	wxSocketClient* Socket = new wxSocketClient();
+	m_socket = new wxSocketClient();
 	// Set up the event handler and subscribe to most events
-	Socket->SetEventHandler(*this, ID_SOCKET);
-	Socket->SetNotify(wxSOCKET_CONNECTION_FLAG | wxSOCKET_INPUT_FLAG | wxSOCKET_LOST_FLAG);
-	Socket->Notify(true);
+	m_socket->SetEventHandler(*this, ID_SOCKET);
+	m_socket->SetNotify(wxSOCKET_CONNECTION_FLAG | wxSOCKET_INPUT_FLAG | wxSOCKET_LOST_FLAG);
+	m_socket->Notify(true);
 	// Wait for the connection event
-	Socket->Connect(addr, false);
+	m_socket->Connect(addr, false);
 	m_console_output->WriteText(wxT("(info) Connecting to localhost:8888"));
 	m_console_output->Newline();
 }
@@ -204,19 +206,13 @@ void VirtualMcuMain::OnSocketEvent(wxSocketEvent& event)
 	// The socket that had the event
 	wxSocketBase* sock = event.GetSocket();
 	// Common buffer shared by the events
-	char buf[20];
+	char buf[40];
+	wxString wxBuf;
+	int foundAtIndex = 0;
 	switch (event.GetSocketEvent())
 	{
 		case wxSOCKET_CONNECTION:
 		{
-			wxString outputString = wxString("0x1234");
-
-			// Send the characters to the server
-			sock->Write(buf, sizeof(buf));
-
-			m_console_output->AppendText("SENDING: "+ outputString);
-			m_console_output->Newline();
-		
 			break;
 		}
 		case wxSOCKET_INPUT:
@@ -225,6 +221,24 @@ void VirtualMcuMain::OnSocketEvent(wxSocketEvent& event)
 			m_console_output->AppendText("RECEIVED: ");
 			m_console_output->AppendText(buf);
 			m_console_output->Newline();
+			wxBuf = wxString::Format("%s", buf);
+			foundAtIndex = wxBuf.Find("OUTPUT_STATE");
+			if (wxNOT_FOUND != foundAtIndex)
+			{
+				for (int i = 0; i < 4; i++)
+				{
+					if ('1' == buf[foundAtIndex + 13 + i])
+					{
+						output_pin[i]->SetValue(true);
+						output_pin[i]->SetLabel("HIGH");
+					}
+					else if ('N' == buf[foundAtIndex + 13 + i])
+					{
+						output_pin[i]->SetValue(false);
+						output_pin[i]->SetLabel("LOW");
+					}
+				}
+			}
 			break;
 		}// The server hangs up after sending the data
 		case wxSOCKET_LOST:
@@ -237,6 +251,6 @@ void VirtualMcuMain::OnSocketEvent(wxSocketEvent& event)
 
 VirtualMcuMain::~VirtualMcuMain()
 {
-
+	m_socket->Destroy();
 }
 

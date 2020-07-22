@@ -31,6 +31,7 @@ protected:
 	wxMenu* m_main_menu;
 	wxMenuItem* m_item_connect;
 	wxRichTextCtrl* m_console_output;
+	wxSocketClient* m_socket;
 
 private:
 	wxDECLARE_EVENT_TABLE();
