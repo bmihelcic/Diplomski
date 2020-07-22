@@ -143,8 +143,17 @@ void VirtualMcuMain::OnButtonClick(wxCommandEvent& evt)
 	if (current_button_ID < 4)
 	{
 		current_button_state = output_pin[current_button_ID]->GetValue();
-		current_button_label = ((true == current_button_state) ? "HIGH" : "LOW");
-		output_pin[current_button_ID]->SetLabel(current_button_label);
+		if (true == current_button_state)
+		{
+			current_button_label = "HIGH";
+			output_pin[current_button_ID]->SetBackgroundColour(*wxBLUE);
+		}
+		else
+		{
+			current_button_label = "LOW";
+			output_pin[current_button_ID]->SetBackgroundColour(wxNullColour);
+		}
+		output_pin[current_button_ID]->SetLabel(current_button_label);				
 	}
 	else
 	{
@@ -152,10 +161,13 @@ void VirtualMcuMain::OnButtonClick(wxCommandEvent& evt)
 		current_button_label = ((true == current_button_state) ? "HIGH" : "LOW");
 		input_pin[current_button_ID - 4]->SetLabel(current_button_label);
 		current_button_ID_label = std::to_string(current_button_ID - 4);
-		socket_message = wxString("SET INPUT" + current_button_ID_label + " " + current_button_label);
-		m_console_output->WriteText(wxT("< sending: " + socket_message));
-		m_console_output->Newline();
-		m_socket->Write(socket_message, sizeof(socket_message));
+		if (m_socket != nullptr && m_socket->IsConnected())
+		{
+			socket_message = wxString("SET INPUT" + current_button_ID_label + " " + current_button_label);
+			m_console_output->WriteText(wxT("< sending: " + socket_message));
+			m_console_output->Newline();
+			m_socket->Write(socket_message, sizeof(socket_message));
+		}
 	}
 	evt.Skip();
 }
@@ -179,11 +191,14 @@ void VirtualMcuMain::OnSliderUpdate(wxScrollEvent& evt)
 		{
 			voltage = slider_value * (MCU_NOMINAL_VOLTAGE / (ADC_MAX_VALUE + 1));
 			adc_voltage_label_0->SetLabel(wxString::Format("%.2f V", voltage));
-			socket_message = wxString("SET ADC0 " + wxString::Format("%.2f", voltage));
-			m_console_output->AppendText("< sending: ");
-			m_console_output->AppendText(socket_message);
-			m_console_output->Newline();
-			slider_value_prev0 = slider_value;
+			if (m_socket != nullptr && m_socket->IsConnected())
+			{
+				socket_message = wxString("SET ADC0 " + wxString::Format("%.2f", voltage));
+				m_console_output->AppendText("< sending: ");
+				m_console_output->AppendText(socket_message);
+				m_console_output->Newline();
+				slider_value_prev0 = slider_value;
+			}
 		}
 	}
 	else if(ID_slider_1 == current_slider_ID)
@@ -193,11 +208,14 @@ void VirtualMcuMain::OnSliderUpdate(wxScrollEvent& evt)
 		{
 			voltage = slider_value * (MCU_NOMINAL_VOLTAGE / (ADC_MAX_VALUE + 1));
 			adc_voltage_label_1->SetLabel(wxString::Format("%.2f V", voltage));;
-			socket_message = wxString("SET ADC1 " + wxString::Format("%.2f", voltage));
-			m_console_output->AppendText("< sending: ");
-			m_console_output->AppendText(socket_message);
-			m_console_output->Newline();
-			slider_value_prev1 = slider_value;
+			if (m_socket != nullptr && m_socket->IsConnected())
+			{
+				socket_message = wxString("SET ADC1 " + wxString::Format("%.2f", voltage));
+				m_console_output->AppendText("< sending: ");
+				m_console_output->AppendText(socket_message);
+				m_console_output->Newline();
+				slider_value_prev1 = slider_value;
+			}
 		}		
 	}
 	evt.Skip();
@@ -250,11 +268,13 @@ void VirtualMcuMain::OnSocketEvent(wxSocketEvent& event)
 					{
 						output_pin[i]->SetValue(true);
 						output_pin[i]->SetLabel("HIGH");
+						output_pin[i]->SetBackgroundColour(*wxBLUE);
 					}
 					else if ('N' == buf[foundAtIndex + 13 + i])
 					{
 						output_pin[i]->SetValue(false);
 						output_pin[i]->SetLabel("LOW");
+						output_pin[i]->SetBackgroundColour(wxNullColour);
 					}
 				}
 			}
@@ -271,7 +291,7 @@ void VirtualMcuMain::OnSocketEvent(wxSocketEvent& event)
 VirtualMcuMain::~VirtualMcuMain()
 {
 	// if socket has been initialized
-	if (m_socket->IsOk())
+	if (m_socket != nullptr)
 	{
 		m_socket->Destroy();
 	}
