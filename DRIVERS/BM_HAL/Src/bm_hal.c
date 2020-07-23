@@ -9,7 +9,7 @@
 #include "bm_hal_gpio.h"
 
 
-#ifdef STM32
+#ifdef STM32F103xB
 static void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
@@ -65,7 +65,7 @@ DWORD   dwThreadId[2];
 
 void BM_HAL_init()
 {
-#ifdef STM32
+#ifdef STM32F103xB
 	HAL_Init();
 	SystemClock_Config();
 	MX_GPIO_Init();
@@ -194,7 +194,7 @@ void BM_HAL_init()
 
 
 
-#ifdef STM32
+#ifdef STM32F103xB
 /**
   * @brief ADC1 Initialization Function
   * @param None

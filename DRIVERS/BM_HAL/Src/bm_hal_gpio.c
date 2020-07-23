@@ -6,16 +6,17 @@
  */
 
 #include "bm_hal_gpio.h"
-#ifdef STM32
+#ifdef STM32F103xB
 #include "stm32f1xx_ll_gpio.h"
-#endif
 
 
+#elif defined(VIRTUAL_MCU)
 int outputPort[4] = {0};
 int inputPort[4] = {0};
 
 int outputPortChange = 0;
 
+#endif
 /**
   * @brief  Get the level of a pin configured in input mode
   * @param  GPIOx: where x can be (A..G depending on device used) to select the GPIO peripheral
@@ -43,7 +44,7 @@ BM_HAL_GPIO_pin_state_t BM_HAL_GPIO_digitalRead(GPIO_TypeDef *GPIOx, uint32_t pi
 {
 	BM_HAL_GPIO_pin_state_t pin_value;
 
-#ifdef STM32
+#ifdef STM32F103xB
 	if ((LL_GPIO_ReadInputPort(GPIOx) & ((pin_mask >> GPIO_PIN_MASK_POS) & 0x0000FFFFU)) != (uint32_t)BM_GPIO_LOW)
 	{
 	    pin_value = BM_GPIO_HIGH;
@@ -90,7 +91,7 @@ BM_HAL_GPIO_pin_state_t BM_HAL_GPIO_digitalRead(GPIO_TypeDef *GPIOx, uint32_t pi
   */
 void BM_HAL_GPIO_digitalWrite(GPIO_TypeDef *GPIOx, uint32_t pin_mask, BM_HAL_GPIO_pin_state_t pin_state)
 {
-#ifdef STM32
+#ifdef STM32F103xB
     if (pin_state != BM_GPIO_LOW)
     {
         LL_GPIO_SetOutputPin(GPIOx, pin_mask);
@@ -139,7 +140,7 @@ void BM_HAL_GPIO_digitalWrite(GPIO_TypeDef *GPIOx, uint32_t pin_mask, BM_HAL_GPI
   */
 void BM_HAL_GPIO_TogglePin(GPIO_TypeDef *GPIOx, uint32_t pin_mask)
 {
-#ifdef STM32
+#ifdef STM32F103xB
 	LL_GPIO_TogglePin(GPIOx, pin_mask);
 #elif defined (VIRTUAL_MCU)
 	if(outputPort[pin_mask] == BM_GPIO_HIGH)

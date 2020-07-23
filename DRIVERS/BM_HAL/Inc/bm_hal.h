@@ -13,7 +13,7 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#ifdef STM32
+#ifdef STM32F103xB
 #include "stm32f1xx_hal.h"
 #include "stm32f1xx_ll_adc.h"
 #include "stm32f1xx_ll_rcc.h"
@@ -74,16 +74,15 @@ CAN_HandleTypeDef hcan;
 #define DEFAULT_PORT_STR        "8080"
 #define DEFAULT_PORT            (8080)
 
-typedef enum ERRORS{
-    ERROR_OK,
-    ERROR_INVALID_HEX
-}ERROR_E;
-
 int stringToHex(char*);
 int hexCharToDec(char, ERROR_E*);
 
 #endif
 
+typedef enum ERRORS{
+    ERROR_OK,
+    ERROR_INVALID_HEX
+}ERROR_E;
 
 void BM_HAL_init();
 void Error_Handler(void);

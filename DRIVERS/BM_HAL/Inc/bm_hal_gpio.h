@@ -8,18 +8,20 @@
 #ifndef INC_BM_HAL_GPIO_H_
 #define INC_BM_HAL_GPIO_H_
 
-//#ifdef STM32
+#include <stdint.h>
+
+#ifdef STM32F103xB
 #include "stm32f103xb.h"
 
-//#elif defined(VIRTUAL_MCU)
-#include <stdint.h>
+
+#elif defined(VIRTUAL_MCU)
 
 #define LL_GPIO_PIN_0 (0u)
 #define LL_GPIO_PIN_1 (1u)
 #define LL_GPIO_PIN_2 (2u)
 #define LL_GPIO_PIN_3 (3u)
 
-//#endif
+#endif
 
 
 
