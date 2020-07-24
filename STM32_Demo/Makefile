@@ -63,6 +63,7 @@ Src/system_stm32f1xx.c \
 ../DRIVERS/STM32F1xx_Driver/Src/stm32f1xx_ll_usart.c \
 ../DRIVERS/BM_HAL/Src/bm_hal.c \
 ../DRIVERS/BM_HAL/Src/bm_hal_gpio.c \
+../DRIVERS/BM_HAL/Src/bm_hal_adc.c \
 
 # ASM sources
 ASM_SOURCES =  \
