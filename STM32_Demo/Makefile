@@ -39,6 +39,7 @@ C_SOURCES =  \
 Src/main.c \
 Src/stm32f1xx_it.c \
 Src/system_stm32f1xx.c \
+Src/stm32f1xx_hal_msp.c \
 ../DRIVERS/STM32F1xx_Driver/Src/stm32f1xx_hal_gpio_ex.c \
 ../DRIVERS/STM32F1xx_Driver/Src/stm32f1xx_hal.c \
 ../DRIVERS/STM32F1xx_Driver/Src/stm32f1xx_hal_rcc.c \
