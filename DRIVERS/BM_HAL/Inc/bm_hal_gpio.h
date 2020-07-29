@@ -32,7 +32,7 @@ typedef enum
 } BM_HAL_GPIO_pin_state_t;
 
 
-
+void BM_HAL_GPIO_init();
 BM_HAL_GPIO_pin_state_t BM_HAL_GPIO_digitalRead(GPIO_TypeDef *GPIOx, uint32_t pin_mask);
 void BM_HAL_GPIO_digitalWrite(GPIO_TypeDef *GPIOx, uint32_t pin_mask, BM_HAL_GPIO_pin_state_t pin_state);
 void BM_HAL_GPIO_TogglePin(GPIO_TypeDef *GPIOx, uint32_t pin_mask);

@@ -11,7 +11,7 @@
 
 #include "bm_hal.h"
 
-ErrorStatus BM_HAL_ADC_init(ADC_TypeDef *ADCx);
+void BM_HAL_ADC_init();
 uint32_t BM_HAL_ADC_readChannel(ADC_TypeDef *ADCx, uint32_t channel);
 
 

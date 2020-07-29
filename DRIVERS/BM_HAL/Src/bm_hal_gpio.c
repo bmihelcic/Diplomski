@@ -4,7 +4,7 @@
  *  Created on: 25. tra 2020.
  *      Author: branimir
  */
-
+#include "bm_hal.h"
 #include "bm_hal_gpio.h"
 #ifdef STM32F103xB
 #include "stm32f1xx_ll_gpio.h"
@@ -17,6 +17,54 @@ int inputPort[4] = {0};
 int outputPortChange = 0;
 
 #endif
+
+/**
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
+void BM_HAL_GPIO_init()
+{
+    LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+    /* GPIO Ports Clock Enable */
+    LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOC);
+    LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOD);
+    LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOA);
+    LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOB);
+
+    /**/
+    LL_GPIO_ResetOutputPin(ON_BOARD_LED_GPIO_Port, ON_BOARD_LED_Pin);
+
+    /**/
+    LL_GPIO_ResetOutputPin(GPIOA, OUTPUT0_Pin|OUTPUT1_Pin|OUTPUT2_Pin|OUTPUT3_Pin);
+
+    /**/
+    GPIO_InitStruct.Pin = ON_BOARD_LED_Pin;
+    GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+    LL_GPIO_Init(ON_BOARD_LED_GPIO_Port, &GPIO_InitStruct);
+
+    /**/
+    GPIO_InitStruct.Pin = OUTPUT0_Pin|OUTPUT1_Pin|OUTPUT2_Pin|OUTPUT3_Pin;
+    GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+    LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    /**/
+    GPIO_InitStruct.Pin = INPUT1_Pin|INPUT2_Pin|INPUT3_Pin;
+    GPIO_InitStruct.Mode = LL_GPIO_MODE_FLOATING;
+    LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    /**/
+    GPIO_InitStruct.Pin = INPUT0_Pin;
+    GPIO_InitStruct.Mode = LL_GPIO_MODE_FLOATING;
+    LL_GPIO_Init(INPUT0_GPIO_Port, &GPIO_InitStruct);
+}
+
+
 /**
   * @brief  Get the level of a pin configured in input mode
   * @param  GPIOx: where x can be (A..G depending on device used) to select the GPIO peripheral
