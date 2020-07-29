@@ -37,7 +37,6 @@ BUILD_DIR = build
 # C sources
 C_SOURCES =  \
 Src/main.c \
-Src/stm32f1xx_hal_msp.c \
 Src/stm32f1xx_it.c \
 Src/system_stm32f1xx.c \
 ../DRIVERS/STM32F1xx_Driver/Src/stm32f1xx_hal_gpio_ex.c \
@@ -54,6 +53,7 @@ Src/system_stm32f1xx.c \
 ../DRIVERS/STM32F1xx_Driver/Src/stm32f1xx_hal_can.c \
 ../DRIVERS/STM32F1xx_Driver/Src/stm32f1xx_hal_tim.c \
 ../DRIVERS/STM32F1xx_Driver/Src/stm32f1xx_hal_tim_ex.c \
+../DRIVERS/STM32F1xx_Driver/Src/stm32f1xx_hal_uart.c \
 ../DRIVERS/STM32F1xx_Driver/Src/stm32f1xx_ll_gpio.c \
 ../DRIVERS/STM32F1xx_Driver/Src/stm32f1xx_ll_adc.c \
 ../DRIVERS/STM32F1xx_Driver/Src/stm32f1xx_ll_dma.c \
@@ -65,6 +65,7 @@ Src/system_stm32f1xx.c \
 ../DRIVERS/BM_HAL/Src/bm_hal_gpio.c \
 ../DRIVERS/BM_HAL/Src/bm_hal_adc.c \
 ../DRIVERS/BM_HAL/Src/bm_hal_can.c \
+../DRIVERS/BM_HAL/Src/bm_hal_uart.c \
 
 # ASM sources
 ASM_SOURCES =  \

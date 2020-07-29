@@ -60,7 +60,6 @@ void BM_HAL_GPIO_init()
 
     /**/
     GPIO_InitStruct.Pin = INPUT0_Pin;
-    GPIO_InitStruct.Mode = LL_GPIO_MODE_FLOATING;
     LL_GPIO_Init(INPUT0_GPIO_Port, &GPIO_InitStruct);
 }
 

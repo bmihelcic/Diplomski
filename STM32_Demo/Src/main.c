@@ -8,18 +8,18 @@
 #include "bm_hal_gpio.h"
 #include "bm_hal_adc.h"
 #include "bm_hal_can.h"
-
+#include "bm_hal_uart.h"
 
 int main(void)
 {
-    uint32_t adcValue = 0;
-    size_t flag = 0;
-
+    uint16_t adcValue1 = 0;
+    uint16_t adcValue2 = 0;
 
     BM_HAL_init();
     BM_HAL_GPIO_init();
     BM_HAL_ADC_init();
     BM_HAL_CAN_init();
+    BM_HAL_UART_init();
 
     while (1)
     {
@@ -73,35 +73,18 @@ int main(void)
             BM_HAL_GPIO_digitalWrite(OUTPUT3_GPIO_Port, OUTPUT3_Pin, BM_GPIO_LOW);
         }
 
+        adcValue1 = BM_HAL_ADC_readChannel(ADC1, LL_ADC_CHANNEL_0);
+        CAN_tx_data[1] = adcValue1;
+        CAN_tx_data[2] = (adcValue1 >> 8) & 0x0F;
+        adcValue2 = BM_HAL_ADC_readChannel(ADC1, LL_ADC_CHANNEL_1);
+        CAN_tx_data[3] = adcValue2;
+        CAN_tx_data[4] = (adcValue2 >> 8) & 0x0F;
 
+        BM_HAL_CAN_send(CAN_tx_data, 5);
 
+        HAL_Delay(200);
 
-//        flag = (flag == 0) ? 1 : 0;
-//        BM_HAL_GPIO_TogglePin(ON_BOARD_LED_GPIO_Port,ON_BOARD_LED_Pin);
-//
-//        if(0 == flag)
-//        {
-//            adcValue = BM_HAL_ADC_readChannel(ADC1, LL_ADC_CHANNEL_0);
-//            if(adcValue > 2000)
-//            {
-//                BM_HAL_GPIO_digitalWrite(OUTPUT0_GPIO_Port, OUTPUT0_Pin, BM_GPIO_HIGH);
-//            }
-//            else
-//            {
-//                BM_HAL_GPIO_digitalWrite(OUTPUT0_GPIO_Port, OUTPUT0_Pin, BM_GPIO_LOW);
-//            }
-//        }
-//        else
-//        {
-//            adcValue = BM_HAL_ADC_readChannel(ADC1, LL_ADC_CHANNEL_1);
-//            if(adcValue > 2000)
-//            {
-//                BM_HAL_GPIO_digitalWrite(OUTPUT3_GPIO_Port, OUTPUT3_Pin, BM_GPIO_HIGH);
-//            }
-//            else
-//            {
-//                BM_HAL_GPIO_digitalWrite(OUTPUT3_GPIO_Port, OUTPUT3_Pin, BM_GPIO_LOW);
-//            }
-//        }
-    }
+        BM_HAL_UART_printf("%d\t%d\t%d\r\n", CAN_tx_data[0], adcValue1, adcValue2);
+
+   }
 }

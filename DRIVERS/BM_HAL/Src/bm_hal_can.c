@@ -15,14 +15,6 @@ uint8_t CAN_rx_data[8] = {0};
 uint8_t CAN_tx_data[8] = {0};
 
 CAN_RxHeaderTypeDef CAN_rx_header;
-CAN_TxHeaderTypeDef CAN_tx_header = {
-        .StdId = PLATFORM_ID,
-        .IDE = CAN_ID_STD,
-        .RTR = CAN_RTR_DATA,
-        .DLC = 1,
-};
-
-uint32_t CAN_tx_mailbox;
 
 /**
   * @brief CAN Initialization Function
@@ -47,11 +39,33 @@ void BM_HAL_CAN_init(void)
   {
     Error_Handler();
   }
+
   BM_HAL_CAN_initFilter();
   HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO0_MSG_PENDING);
   HAL_CAN_Start(&hcan);
 }
 
+
+void BM_HAL_CAN_send(uint8_t *aData, uint8_t dataBytesNum)
+{
+    CAN_TxHeaderTypeDef CAN_tx_header;
+    uint32_t CAN_tx_mailbox;
+
+    CAN_tx_header.StdId = PLATFORM_ID;
+    CAN_tx_header.IDE = CAN_ID_STD;
+    CAN_tx_header.RTR = CAN_RTR_DATA;
+    CAN_tx_header.DLC = dataBytesNum;
+
+    if(HAL_CAN_GetTxMailboxesFreeLevel(&hcan) > 0u)
+    {
+        if(HAL_CAN_AddTxMessage(&hcan, &CAN_tx_header, CAN_tx_data, &CAN_tx_mailbox) != HAL_OK)
+        {
+            Error_Handler();
+        }
+    }
+    while(HAL_CAN_IsTxMessagePending(&hcan,CAN_tx_mailbox));
+
+}
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *canHandle)
 {
@@ -59,6 +73,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *canHandle)
     {
         Error_Handler();
     }
+//    memcpy(UART_outputBuffer, CAN_rx_data, sizeof(CAN_rx_data));
 }
 
 

@@ -15,6 +15,7 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #ifdef STM32F103xB
 #include "stm32f1xx_hal.h"
+#include "stm32f1xx_hal_uart.h"
 #include "stm32f1xx_ll_adc.h"
 #include "stm32f1xx_ll_rcc.h"
 #include "stm32f1xx_ll_bus.h"
@@ -54,8 +55,6 @@ typedef enum ERRORS{
     ERROR_INVALID_HEX
 }ERROR_E;
 
-
-CAN_HandleTypeDef hcan;
 
 #include <math.h>
 #include <stdio.h>

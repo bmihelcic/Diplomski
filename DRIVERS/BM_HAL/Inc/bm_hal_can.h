@@ -13,8 +13,10 @@
 extern uint8_t CAN_rx_data[8];
 extern uint8_t CAN_tx_data[8];
 
+CAN_HandleTypeDef hcan;
 
 void BM_HAL_CAN_init(void);
+void BM_HAL_CAN_send(uint8_t *aData, uint8_t dataBytesNum);
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *canHandle);
 
 
