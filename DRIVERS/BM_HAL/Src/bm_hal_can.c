@@ -7,7 +7,7 @@
 
 #include "bm_hal_can.h"
 
-#define PLATFORM_ID (0x125)
+CAN_HandleTypeDef hcan;
 
 static void BM_HAL_CAN_initFilter();
 
@@ -24,8 +24,8 @@ CAN_RxHeaderTypeDef CAN_rx_header;
 void BM_HAL_CAN_init(void)
 {
   hcan.Instance = CAN1;
-  hcan.Init.Prescaler = 16;
-  hcan.Init.Mode = CAN_MODE_SILENT_LOOPBACK;
+  hcan.Init.Prescaler = 9;
+  hcan.Init.Mode = CAN_MODE_NORMAL;
   hcan.Init.SyncJumpWidth = CAN_SJW_1TQ;
   hcan.Init.TimeSeg1 = CAN_BS1_13TQ;
   hcan.Init.TimeSeg2 = CAN_BS2_2TQ;
@@ -51,14 +51,14 @@ void BM_HAL_CAN_send(uint8_t *aData, uint8_t dataBytesNum)
     CAN_TxHeaderTypeDef CAN_tx_header;
     uint32_t CAN_tx_mailbox;
 
-    CAN_tx_header.StdId = PLATFORM_ID;
+    CAN_tx_header.StdId = ownID;
     CAN_tx_header.IDE = CAN_ID_STD;
     CAN_tx_header.RTR = CAN_RTR_DATA;
     CAN_tx_header.DLC = dataBytesNum;
 
     if(HAL_CAN_GetTxMailboxesFreeLevel(&hcan) > 0u)
     {
-        if(HAL_CAN_AddTxMessage(&hcan, &CAN_tx_header, CAN_tx_data, &CAN_tx_mailbox) != HAL_OK)
+        if(HAL_CAN_AddTxMessage(&hcan, &CAN_tx_header, aData, &CAN_tx_mailbox) != HAL_OK)
         {
             Error_Handler();
         }
@@ -73,7 +73,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *canHandle)
     {
         Error_Handler();
     }
-//    memcpy(UART_outputBuffer, CAN_rx_data, sizeof(CAN_rx_data));
+    systemState = SYSTEM_STATE_UART_OUT;
 }
 
 

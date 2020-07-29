@@ -50,11 +50,22 @@ extern "C" {
 #define INPUT3_Pin LL_GPIO_PIN_0
 #define INPUT3_GPIO_Port GPIOB
 
+
+#define ownID (0x125)
+
 typedef enum ERRORS{
     ERROR_OK,
     ERROR_INVALID_HEX
 }ERROR_E;
 
+typedef enum {
+    SYSTEM_STATE_INIT,
+    SYSTEM_STATE_MEASUREMENT,
+    SYSTEM_STATE_CAN_OUT,
+    SYSTEM_STATE_UART_OUT
+}SYSTEM_STATE_E;
+
+extern SYSTEM_STATE_E systemState;
 
 #include <math.h>
 #include <stdio.h>

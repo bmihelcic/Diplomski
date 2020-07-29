@@ -13,7 +13,8 @@
 extern uint8_t CAN_rx_data[8];
 extern uint8_t CAN_tx_data[8];
 
-CAN_HandleTypeDef hcan;
+extern CAN_HandleTypeDef hcan;
+extern CAN_RxHeaderTypeDef CAN_rx_header;
 
 void BM_HAL_CAN_init(void);
 void BM_HAL_CAN_send(uint8_t *aData, uint8_t dataBytesNum);
