@@ -1,3 +1,5 @@
 /Virtual MCU GUI/.vs
 /Virtual MCU GUI/Debug
 STM32_Demo/build
+Windows_Demo/Debug
+STM32_Demo_BOARD_2/build
