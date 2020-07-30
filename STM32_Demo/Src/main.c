@@ -14,8 +14,6 @@ int main(void)
 {
     uint16_t adcValue1 = 0;
     uint16_t adcValue2 = 0;
-    uint16_t adcValueReceived1 = 0;
-    uint16_t adcValueReceived2 = 0;
     uint8_t inputState = 0;
 
     BM_HAL_init();
@@ -96,19 +94,14 @@ int main(void)
             case SYSTEM_STATE_CAN_OUT:
             {
                 BM_HAL_CAN_send(CAN_tx_data, 5);
-                BM_HAL_UART_printf("INPUT: %d  ADC0: %d  ADC1: %d\r\n", inputState, adcValue1, adcValue2);
-                BM_HAL_UART_printf("CAN TX MSG: 0x%x : 0x%x 0x%x 0x%x 0x%x 0x%x\r\n\n", ownID, CAN_tx_data[0],
-                        CAN_tx_data[1], CAN_tx_data[2], CAN_tx_data[3], CAN_tx_data[4]);
+                systemState = SYSTEM_STATE_UART_OUT;
                 break;
             }
             case SYSTEM_STATE_UART_OUT:
             {
-                adcValueReceived1 = CAN_rx_data[1] | ((CAN_rx_data[2] << 8) & 0b111100000000);
-                adcValueReceived2 = CAN_rx_data[3] | ((CAN_rx_data[4] << 8) & 0b111100000000);
-                BM_HAL_UART_printf("CAN RX MSG: 0x%x : 0x%x 0x%x 0x%x 0x%x 0x%x\r\n", CAN_rx_header.StdId, CAN_rx_data[0],
-                        CAN_rx_data[1], CAN_rx_data[2], CAN_rx_data[3], CAN_rx_data[4]);
-                BM_HAL_UART_printf("INPUT: %d  ADC0: %d  ADC1: %d\r\n", CAN_rx_data[0], adcValueReceived1, adcValueReceived2);
-                BM_HAL_UART_printf("\n");
+                BM_HAL_UART_printf("CAN TX MSG: 0x%x : 0x%x 0x%x 0x%x 0x%x 0x%x\r\n", ownID, CAN_tx_data[0],
+                        CAN_tx_data[1], CAN_tx_data[2], CAN_tx_data[3], CAN_tx_data[4]);
+                BM_HAL_UART_printf("INPUT: %d  ADC0: %d  ADC1: %d\r\n\n", inputState, adcValue1, adcValue2);
                 systemState = SYSTEM_STATE_MEASUREMENT;
                 break;
             }
@@ -117,6 +110,6 @@ int main(void)
                 systemState = SYSTEM_STATE_MEASUREMENT;
             }
         }
-        HAL_Delay(500);
+        HAL_Delay(50);
    }
 }

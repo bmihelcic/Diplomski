@@ -73,7 +73,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *canHandle)
     {
         Error_Handler();
     }
-    systemState = SYSTEM_STATE_UART_OUT;
+//    systemState = SYSTEM_STATE_UART_OUT;
 }
 
 
