@@ -16,6 +16,8 @@ public:
 	void OnButtonClick(wxCommandEvent& evt);
 	void OnSliderUpdate(wxScrollEvent& evt);
 	void OnConnectToServer(wxCommandEvent& evt);
+	void OnRefresh(wxCommandEvent& evt);
+	void OnClientClose(wxCommandEvent& evt);
 	void OnSocketEvent(wxSocketEvent& evt);
 
 protected:
@@ -31,6 +33,8 @@ protected:
 	wxMenuBar* m_menu_bar;
 	wxMenu* m_main_menu;
 	wxMenuItem* m_item_connect;
+	wxMenuItem* m_item_refresh;
+	wxMenuItem* m_item_close;
 	wxRichTextCtrl* m_console_output;
 	wxSocketClient* m_socket;
 
@@ -53,6 +57,8 @@ enum IDs{
 	ID_slider_0,
 	ID_slider_1,
 	ID_CLIENT_CONNECT,
+	ID_CLIENT_REFRESH,
+	ID_CLIENT_CLOSE,
 	ID_SOCKET,
 	ID_RICHTEXT_WINDOW
 };

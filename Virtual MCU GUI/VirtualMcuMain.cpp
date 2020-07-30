@@ -13,6 +13,8 @@ wxBEGIN_EVENT_TABLE(VirtualMcuMain, wxFrame)
 	EVT_COMMAND_SCROLL_CHANGED(ID_slider_0, VirtualMcuMain::OnSliderUpdate)
 	EVT_COMMAND_SCROLL_CHANGED(ID_slider_0, VirtualMcuMain::OnSliderUpdate)
 	EVT_MENU(ID_CLIENT_CONNECT, VirtualMcuMain::OnConnectToServer)
+	EVT_MENU(ID_CLIENT_REFRESH, VirtualMcuMain::OnRefresh)
+	EVT_MENU(ID_CLIENT_CLOSE, VirtualMcuMain::OnClientClose)
 	EVT_SOCKET(ID_SOCKET, VirtualMcuMain::OnSocketEvent)
 wxEND_EVENT_TABLE()
 
@@ -57,8 +59,14 @@ VirtualMcuMain::VirtualMcuMain() : wxFrame(nullptr, wxID_ANY, "VIRTUAL MCU")
 
 	m_menu_bar = new wxMenuBar(0);
 	m_main_menu = new wxMenu();
-	m_item_connect = new wxMenuItem(m_main_menu, ID_CLIENT_CONNECT, wxString(wxT("Connect")), wxEmptyString, wxITEM_NORMAL);
+	m_item_connect = new wxMenuItem(m_main_menu, ID_CLIENT_CONNECT, wxString(wxT("Connect")), wxEmptyString, wxITEM_NORMAL);	
+	m_item_refresh = new wxMenuItem(m_main_menu, ID_CLIENT_REFRESH, wxString(wxT("Refresh")), wxEmptyString, wxITEM_NORMAL);	
+	m_item_close = new wxMenuItem(m_main_menu, ID_CLIENT_CLOSE, wxString(wxT("Close connection")), wxEmptyString, wxITEM_NORMAL);
+	m_item_refresh->Enable(false);
+	m_item_close->Enable(false);
 	m_main_menu->Append(m_item_connect);
+	m_main_menu->Append(m_item_refresh);
+	m_main_menu->Append(m_item_close);
 	m_menu_bar->Append(m_main_menu, wxT("Menu"));
 	this->SetMenuBar(m_menu_bar);
 
@@ -227,7 +235,6 @@ void VirtualMcuMain::OnSliderUpdate(wxScrollEvent& evt)
 void VirtualMcuMain::OnConnectToServer(wxCommandEvent& WXUNUSED(event))
 {
 	wxIPV4address addr;
-	wxString socket_message;
 
 	addr.Hostname(wxT("localhost"));
 	addr.Service(8080);
@@ -237,41 +244,14 @@ void VirtualMcuMain::OnConnectToServer(wxCommandEvent& WXUNUSED(event))
 	m_socket->SetEventHandler(*this, ID_SOCKET);
 	m_socket->SetNotify(wxSOCKET_CONNECTION_FLAG | wxSOCKET_INPUT_FLAG | wxSOCKET_LOST_FLAG);
 	m_socket->Notify(true);
+
 	// Wait for the connection event
 	m_socket->Connect(addr, false);
+
+	m_item_refresh->Enable(true);
+	m_item_close->Enable(true);
 	m_console_output->WriteText(wxT("(info) Connecting to localhost:8080"));
 	m_console_output->Newline();
-
-	socket_message = wxString("SET ADC0 " + wxString::Format("%d", adc_slider_0->GetValue()));
-	m_console_output->AppendText("< sending: ");
-	m_console_output->AppendText(socket_message);
-	m_console_output->Newline();
-	m_socket->Write(socket_message, sizeof(socket_message));
-	socket_message = wxString("SET ADC1 " + wxString::Format("%d", adc_slider_1->GetValue()));
-	m_console_output->AppendText("< sending: ");
-	m_console_output->AppendText(socket_message);
-	m_console_output->Newline();
-	m_socket->Write(socket_message, sizeof(socket_message));
-	socket_message = wxString("SET INPUT0 " + input_pin[0]->GetLabel());
-	m_console_output->AppendText("< sending: ");
-	m_console_output->AppendText(socket_message);
-	m_console_output->Newline();
-	m_socket->Write(socket_message, sizeof(socket_message));
-	socket_message = wxString("SET INPUT1 " + input_pin[1]->GetLabel());
-	m_console_output->AppendText("< sending: ");
-	m_console_output->AppendText(socket_message);
-	m_console_output->Newline();
-	m_socket->Write(socket_message, sizeof(socket_message));
-	socket_message = wxString("SET INPUT2 " + input_pin[2]->GetLabel());
-	m_console_output->AppendText("< sending: ");
-	m_console_output->AppendText(socket_message);
-	m_console_output->Newline();
-	m_socket->Write(socket_message, sizeof(socket_message));
-	socket_message = wxString("SET INPUT3 " + input_pin[3]->GetLabel());
-	m_console_output->AppendText("< sending: ");
-	m_console_output->AppendText(socket_message);
-	m_console_output->Newline();
-	m_socket->Write(socket_message, sizeof(socket_message));
 }
 
 void VirtualMcuMain::OnSocketEvent(wxSocketEvent& event)
@@ -323,6 +303,55 @@ void VirtualMcuMain::OnSocketEvent(wxSocketEvent& event)
 			break;
 		}
 	}
+}
+
+
+void VirtualMcuMain::OnRefresh(wxCommandEvent& evt)
+{
+	wxString socket_message;
+
+	if (m_socket != nullptr && m_socket->IsConnected()) {
+		socket_message = wxString("SET ADC0 " + wxString::Format("%d", adc_slider_0->GetValue()));
+		m_console_output->AppendText("< sending: ");
+		m_console_output->AppendText(socket_message);
+		m_console_output->Newline();
+		m_socket->Write(socket_message, sizeof(socket_message));
+		socket_message = wxString("SET ADC1 " + wxString::Format("%d", adc_slider_1->GetValue()));
+		m_console_output->AppendText("< sending: ");
+		m_console_output->AppendText(socket_message);
+		m_console_output->Newline();
+		m_socket->Write(socket_message, sizeof(socket_message));
+		socket_message = wxString("SET INPUT0 " + input_pin[0]->GetLabel());
+		m_console_output->AppendText("< sending: ");
+		m_console_output->AppendText(socket_message);
+		m_console_output->Newline();
+		m_socket->Write(socket_message, sizeof(socket_message));
+		socket_message = wxString("SET INPUT1 " + input_pin[1]->GetLabel());
+		m_console_output->AppendText("< sending: ");
+		m_console_output->AppendText(socket_message);
+		m_console_output->Newline();
+		m_socket->Write(socket_message, sizeof(socket_message));
+		socket_message = wxString("SET INPUT2 " + input_pin[2]->GetLabel());
+		m_console_output->AppendText("< sending: ");
+		m_console_output->AppendText(socket_message);
+		m_console_output->Newline();
+		m_socket->Write(socket_message, sizeof(socket_message));
+		socket_message = wxString("SET INPUT3 " + input_pin[3]->GetLabel());
+		m_console_output->AppendText("< sending: ");
+		m_console_output->AppendText(socket_message);
+		m_console_output->Newline();
+		m_socket->Write(socket_message, sizeof(socket_message));
+	}
+}
+
+void VirtualMcuMain::OnClientClose(wxCommandEvent& evt)
+{
+	if (m_socket != nullptr)
+	{
+		m_socket->Destroy();
+	}
+	m_item_refresh->Enable(false);
+	m_item_close->Enable(false);
 }
 
 VirtualMcuMain::~VirtualMcuMain()
