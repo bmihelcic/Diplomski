@@ -93,9 +93,9 @@ VirtualMcuMain::VirtualMcuMain() : wxFrame(nullptr, wxID_ANY, "VIRTUAL MCU")
 		wx_flex_grid_sizer_1_1->Add(output_pin[i], 0, wxEXPAND, 0);
 		
 
-		input_pin[i] = new wxToggleButton(this, ID_input_0 + i, wxString::Format("LOW", i), wxDefaultPosition, wxDefaultSize, 0);
+		input_pin[i] = new wxToggleButton(this, ID_input_0 + i, wxString::Format("HIGH", i), wxDefaultPosition, wxDefaultSize, 0);
 		input_pin[i]->SetMinSize(wxSize(50, 50));
-		output_pin[i]->SetValue(false);
+		output_pin[i]->SetValue(true);
 		input_pin[i]->Bind(wxEVT_COMMAND_TOGGLEBUTTON_CLICKED, &VirtualMcuMain::OnButtonClick, this);
 		wx_flex_grid_sizer_1_2->Add(input_pin[i], 0, wxEXPAND, 0);
 	}	
@@ -226,6 +226,8 @@ void VirtualMcuMain::OnSliderUpdate(wxScrollEvent& evt)
 void VirtualMcuMain::OnConnectToServer(wxCommandEvent& WXUNUSED(event))
 {
 	wxIPV4address addr;
+	wxString socket_message;
+
 	addr.Hostname(wxT("localhost"));
 	addr.Service(8080);
 	// Create the socket
@@ -238,6 +240,37 @@ void VirtualMcuMain::OnConnectToServer(wxCommandEvent& WXUNUSED(event))
 	m_socket->Connect(addr, false);
 	m_console_output->WriteText(wxT("(info) Connecting to localhost:8080"));
 	m_console_output->Newline();
+
+	socket_message = wxString("SET ADC0 " + wxString::Format("%d", adc_slider_0->GetValue()));
+	m_console_output->AppendText("< sending: ");
+	m_console_output->AppendText(socket_message);
+	m_console_output->Newline();
+	m_socket->Write(socket_message, sizeof(socket_message));
+	socket_message = wxString("SET ADC1 " + wxString::Format("%d", adc_slider_1->GetValue()));
+	m_console_output->AppendText("< sending: ");
+	m_console_output->AppendText(socket_message);
+	m_console_output->Newline();
+	m_socket->Write(socket_message, sizeof(socket_message));
+	socket_message = wxString("SET INPUT0 " + input_pin[0]->GetLabel());
+	m_console_output->AppendText("< sending: ");
+	m_console_output->AppendText(socket_message);
+	m_console_output->Newline();
+	m_socket->Write(socket_message, sizeof(socket_message));
+	socket_message = wxString("SET INPUT1 " + input_pin[1]->GetLabel());
+	m_console_output->AppendText("< sending: ");
+	m_console_output->AppendText(socket_message);
+	m_console_output->Newline();
+	m_socket->Write(socket_message, sizeof(socket_message));
+	socket_message = wxString("SET INPUT2 " + input_pin[2]->GetLabel());
+	m_console_output->AppendText("< sending: ");
+	m_console_output->AppendText(socket_message);
+	m_console_output->Newline();
+	m_socket->Write(socket_message, sizeof(socket_message));
+	socket_message = wxString("SET INPUT3 " + input_pin[3]->GetLabel());
+	m_console_output->AppendText("< sending: ");
+	m_console_output->AppendText(socket_message);
+	m_console_output->Newline();
+	m_socket->Write(socket_message, sizeof(socket_message));
 }
 
 void VirtualMcuMain::OnSocketEvent(wxSocketEvent& event)
@@ -248,6 +281,7 @@ void VirtualMcuMain::OnSocketEvent(wxSocketEvent& event)
 	char buf[40];
 	wxString wxBuf;
 	int foundAtIndex = 0;
+	int ledState = 0;
 	switch (event.GetSocketEvent())
 	{
 		case wxSOCKET_CONNECTION:
@@ -261,7 +295,7 @@ void VirtualMcuMain::OnSocketEvent(wxSocketEvent& event)
 			m_console_output->AppendText(buf);
 			m_console_output->Newline();
 			wxBuf = wxString::Format("%s", buf);
-			foundAtIndex = wxBuf.Find("OUTPUT_STATE");
+			foundAtIndex = wxBuf.Find("0x125:");
 			if (wxNOT_FOUND != foundAtIndex)
 			{
 				for (int i = 0; i < 4; i++)
