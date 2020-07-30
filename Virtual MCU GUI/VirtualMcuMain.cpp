@@ -25,37 +25,60 @@ VirtualMcuMain::VirtualMcuMain() : wxFrame(nullptr, wxID_ANY, "VIRTUAL MCU")
 	this->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNHIGHLIGHT));
 
 	wxBoxSizer* wx_box_sizer_0;
-	wx_box_sizer_0 = new wxBoxSizer(wxVERTICAL);
 
 	wxBoxSizer* wx_box_sizer_1;
-	wx_box_sizer_1 = new wxBoxSizer(wxHORIZONTAL);
-
 	wxFlexGridSizer* wx_flex_grid_sizer_1_1;
+	wxFlexGridSizer* wx_flex_grid_sizer_1_2;
+
+	wxBoxSizer* wx_box_sizer_2;
+	wxFlexGridSizer* wx_flex_grid_sizer_2_1;
+
+	wxBoxSizer* wx_box_sizer_3;
+	wxBoxSizer* wx_box_sizer_3_1;
+	wxBoxSizer* wx_box_sizer_3_2;
+
+	wx_box_sizer_0 = new wxBoxSizer(wxVERTICAL);	
+
+	wx_box_sizer_1 = new wxBoxSizer(wxHORIZONTAL);
 	wx_flex_grid_sizer_1_1 = new wxFlexGridSizer(0, 4, 0, 0);
+	wx_flex_grid_sizer_1_2 = new wxFlexGridSizer(0, 4, 0, 0);
+	
+	wx_box_sizer_2 = new wxBoxSizer(wxVERTICAL);
+	wx_flex_grid_sizer_2_1 = new wxFlexGridSizer(0, 3, 0, 0);
+	
+	wx_box_sizer_3 = new wxBoxSizer(wxVERTICAL);
+	wx_box_sizer_3_1 = new wxBoxSizer(wxHORIZONTAL);
+	wx_box_sizer_3_2 = new wxBoxSizer(wxHORIZONTAL);	
+
+
+
 	wx_flex_grid_sizer_1_1->SetFlexibleDirection(wxBOTH);
 	for (int i = 0; i < 4; i++) { wx_flex_grid_sizer_1_1->AddGrowableCol(i);}
 	//wx_flex_grid_sizer_1_1->AddGrowableRow(1);	
 	wx_flex_grid_sizer_1_1->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
-	wxFlexGridSizer* wx_flex_grid_sizer_1_2;
-	wx_flex_grid_sizer_1_2 = new wxFlexGridSizer(0, 4, 0, 0);
 	wx_flex_grid_sizer_1_2->SetFlexibleDirection(wxBOTH);
 	for (int i = 0; i < 4; i++) { wx_flex_grid_sizer_1_2->AddGrowableCol(i); }
 	//wx_flex_grid_sizer_1_2->AddGrowableRow(1);	
 	wx_flex_grid_sizer_1_2->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
-	
-	wxBoxSizer* wx_box_sizer_2;
-	wx_box_sizer_2 = new wxBoxSizer(wxHORIZONTAL);
-
-	wxFlexGridSizer* wx_flex_grid_sizer_2_1;
-	wx_flex_grid_sizer_2_1 = new wxFlexGridSizer(0, 3, 0, 0);
+		
 	//for (int i = 0; i < 3; i++) { wx_flex_grid_sizer_2_1->AddGrowableCol(i); }
 	wx_flex_grid_sizer_2_1->AddGrowableCol(1);	
 	wx_flex_grid_sizer_2_1->SetFlexibleDirection(wxBOTH);
 	wx_flex_grid_sizer_2_1->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
-	wxBoxSizer* wx_box_sizer_3;
-	wx_box_sizer_3 = new wxBoxSizer(wxHORIZONTAL);
+	m_staticText13 = new wxStaticText(this, wxID_ANY, wxT("INPUT: "), wxDefaultPosition, wxDefaultSize, 0);
+	m_staticText14 = new wxStaticText(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, 0);
+	m_staticText15 = new wxStaticText(this, wxID_ANY, wxT("ADC0: "), wxDefaultPosition, wxDefaultSize, 0);
+	m_staticText16 = new wxStaticText(this, wxID_ANY, wxT("2047"), wxDefaultPosition, wxDefaultSize, 0);
+	m_staticText17 = new wxStaticText(this, wxID_ANY, wxT("ADC1:"), wxDefaultPosition, wxDefaultSize, 0);
+	m_staticText18 = new wxStaticText(this, wxID_ANY, wxT("2047"), wxDefaultPosition, wxDefaultSize, 0);
+	m_staticText13->Wrap(-1);
+	m_staticText14->Wrap(-1);
+	m_staticText15->Wrap(-1);
+	m_staticText16->Wrap(-1);
+	m_staticText17->Wrap(-1);
+	m_staticText18->Wrap(-1);
 
 	m_menu_bar = new wxMenuBar(0);
 	m_main_menu = new wxMenu();
@@ -69,12 +92,6 @@ VirtualMcuMain::VirtualMcuMain() : wxFrame(nullptr, wxID_ANY, "VIRTUAL MCU")
 	m_main_menu->Append(m_item_close);
 	m_menu_bar->Append(m_main_menu, wxT("Menu"));
 	this->SetMenuBar(m_menu_bar);
-
-	m_console_output = new wxRichTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 | wxVSCROLL | wxHSCROLL | wxNO_BORDER | wxWANTS_CHARS);
-	m_console_output->Enable(true);
-	wx_box_sizer_3->Add(m_console_output, 1, wxEXPAND | wxALL, 5);
-
-	
 
 	for (int i = 0; i < 8; i++)
 	{
@@ -118,19 +135,33 @@ VirtualMcuMain::VirtualMcuMain() : wxFrame(nullptr, wxID_ANY, "VIRTUAL MCU")
 	adc_slider_1 = new wxSlider(this, ID_slider_1, 2047, 0, 4095, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL);
 	adc_slider_1->Bind(wxEVT_SCROLL_CHANGED, &VirtualMcuMain::OnSliderUpdate, this);
 
-	wx_flex_grid_sizer_2_1->Add(adc_label_0, 0, wxALIGN_CENTER | wxALL, 5);
-	wx_flex_grid_sizer_2_1->Add(adc_slider_0, 1, wxEXPAND | wxALL, 5);
-	wx_flex_grid_sizer_2_1->Add(adc_voltage_label_0, 0, wxALIGN_CENTER | wxALL, 5);
-	wx_flex_grid_sizer_2_1->Add(adc_label_1, 0, wxALIGN_CENTER | wxALL, 5);
-	wx_flex_grid_sizer_2_1->Add(adc_slider_1, 1, wxEXPAND | wxALL, 5);
-	wx_flex_grid_sizer_2_1->Add(adc_voltage_label_1, 0, wxALIGN_CENTER | wxALL, 5);
+	m_console_output = new wxRichTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 | wxVSCROLL | wxHSCROLL | wxNO_BORDER | wxWANTS_CHARS);
+	m_console_output->Enable(true);
 
-	wx_box_sizer_2->Add(wx_flex_grid_sizer_2_1, 1, wxEXPAND | wxRIGHT, 20);
+	wx_flex_grid_sizer_2_1->Add(adc_label_0, 0, wxALIGN_CENTER | wxRIGHT, 10);
+	wx_flex_grid_sizer_2_1->Add(adc_slider_0, 0, wxEXPAND, 10);
+	wx_flex_grid_sizer_2_1->Add(adc_voltage_label_0, 0, wxALIGN_CENTER | wxLEFT, 10);
+	wx_flex_grid_sizer_2_1->Add(adc_label_1, 0, wxALIGN_CENTER | wxRIGHT, 10);
+	wx_flex_grid_sizer_2_1->Add(adc_slider_1, 0,  wxEXPAND, 10);
+	wx_flex_grid_sizer_2_1->Add(adc_voltage_label_1, 0, wxALIGN_CENTER | wxLEFT, 10);
+
+	wx_box_sizer_2->Add(wx_flex_grid_sizer_2_1, 0, wxALL | wxEXPAND, 5);
+
+	wx_box_sizer_3_1->Add(m_staticText13, 0, wxALIGN_CENTER | wxLEFT, 40);
+	wx_box_sizer_3_1->Add(m_staticText14, 0, wxALIGN_CENTER | wxLEFT, 5);
+	wx_box_sizer_3_1->Add(m_staticText15, 0, wxALIGN_CENTER | wxLEFT, 50);
+	wx_box_sizer_3_1->Add(m_staticText16, 0, wxALIGN_CENTER | wxLEFT, 5);
+	wx_box_sizer_3_1->Add(m_staticText17, 0, wxALIGN_CENTER | wxLEFT, 50);
+	wx_box_sizer_3_1->Add(m_staticText18, 0, wxALIGN_CENTER | wxLEFT, 5);
+	wx_box_sizer_3_2->Add(m_console_output, 1, wxEXPAND | wxALL, 5);		
+
+	wx_box_sizer_3->Add(wx_box_sizer_3_1, 0, wxEXPAND | wxRIGHT, 5);
+	wx_box_sizer_3->Add(wx_box_sizer_3_2, 1, wxEXPAND | wxRIGHT, 5);
 
 	wx_box_sizer_1->Add(wx_flex_grid_sizer_1_1, 1, wxRIGHT | wxEXPAND, 10);
 	wx_box_sizer_1->Add(wx_flex_grid_sizer_1_2, 1, wxLEFT | wxEXPAND, 10);
-	wx_box_sizer_0->Add(wx_box_sizer_1, 1, wxLEFT | wxRIGHT | wxTOP| wxSHAPED, 10);
-	wx_box_sizer_0->Add(wx_box_sizer_2, 1, wxLEFT | wxRIGHT | wxSHAPED, 10);
+	wx_box_sizer_0->Add(wx_box_sizer_1, 0, wxLEFT | wxRIGHT | wxTOP| wxSHAPED, 10);
+	wx_box_sizer_0->Add(wx_box_sizer_2, 0, wxALL | wxEXPAND, 25);
 	wx_box_sizer_0->Add(wx_box_sizer_3, 1, wxLEFT | wxRIGHT | wxEXPAND, 10);
 
 	this->SetSizer(wx_box_sizer_0);
