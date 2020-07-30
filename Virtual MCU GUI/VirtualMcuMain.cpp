@@ -72,13 +72,13 @@ VirtualMcuMain::VirtualMcuMain() : wxFrame(nullptr, wxID_ANY, "VIRTUAL MCU")
 	{
 		if (i < 4)
 		{
-			pin_labels[i] = new wxStaticText(this, wxID_ANY, wxString::Format("OUT%i", i), wxDefaultPosition, wxDefaultSize, 0);
+			pin_labels[i] = new wxStaticText(this, wxID_ANY, wxString::Format("OUT%i", 3-i), wxDefaultPosition, wxDefaultSize, 0);
 			pin_labels[i]->Wrap(-1);
 			wx_flex_grid_sizer_1_1->Add(pin_labels[i], 0, wxALIGN_CENTER, 0);
 		}
 		else
 		{
-			pin_labels[i] = new wxStaticText(this, wxID_ANY, wxString::Format("IN%i", i-4), wxDefaultPosition, wxDefaultSize, 0);
+			pin_labels[i] = new wxStaticText(this, wxID_ANY, wxString::Format("IN%i", 7-i), wxDefaultPosition, wxDefaultSize, 0);
 			pin_labels[i]->Wrap(-1);
 			wx_flex_grid_sizer_1_2->Add(pin_labels[i], 0, wxALIGN_CENTER, 0);
 		}		
@@ -86,19 +86,20 @@ VirtualMcuMain::VirtualMcuMain() : wxFrame(nullptr, wxID_ANY, "VIRTUAL MCU")
 
 	for (int i = 0; i < 4; i++)
 	{
-		output_pin[i] = new wxToggleButton(this,ID_output_0 + i, wxString::Format("LOW",i), wxDefaultPosition, wxDefaultSize, 0);
+		output_pin[i] = new wxToggleButton(this, ID_output_0 + i, wxString::Format("LOW",i), wxDefaultPosition, wxDefaultSize, 0);
 		output_pin[i]->SetMinSize(wxSize(50, 50));
 		output_pin[i]->SetValue(false);
 		output_pin[i]->Bind(wxEVT_COMMAND_TOGGLEBUTTON_CLICKED, &VirtualMcuMain::OnButtonClick, this);
-		wx_flex_grid_sizer_1_1->Add(output_pin[i], 0, wxEXPAND, 0);
-		
 
 		input_pin[i] = new wxToggleButton(this, ID_input_0 + i, wxString::Format("HIGH", i), wxDefaultPosition, wxDefaultSize, 0);
-		input_pin[i]->SetMinSize(wxSize(50, 50));
-		output_pin[i]->SetValue(true);
+		input_pin[i]->SetMinSize(wxSize(50, 50));		
 		input_pin[i]->Bind(wxEVT_COMMAND_TOGGLEBUTTON_CLICKED, &VirtualMcuMain::OnButtonClick, this);
-		wx_flex_grid_sizer_1_2->Add(input_pin[i], 0, wxEXPAND, 0);
 	}	
+	for (int i = 4; i > 0; i--)
+	{
+		wx_flex_grid_sizer_1_1->Add(output_pin[i-1], 0, wxEXPAND, 0);
+		wx_flex_grid_sizer_1_2->Add(input_pin[i-1], 0, wxEXPAND, 0);
+	}
 
 	adc_label_0 = new wxStaticText(this, wxID_ANY, wxT("ADC_CH0"), wxDefaultPosition, wxDefaultSize, 0);
 	adc_label_1 = new wxStaticText(this, wxID_ANY, wxT("ADC_CH1"), wxDefaultPosition, wxDefaultSize, 0);
@@ -158,7 +159,7 @@ void VirtualMcuMain::OnButtonClick(wxCommandEvent& evt)
 	else
 	{
 		current_button_state = input_pin[current_button_ID - 4]->GetValue();
-		current_button_label = ((true == current_button_state) ? "HIGH" : "LOW");
+		current_button_label = ((true == current_button_state) ? "LOW" : "HIGH");
 		input_pin[current_button_ID - 4]->SetLabel(current_button_label);
 		current_button_ID_label = std::to_string(current_button_ID - 4);
 		if (m_socket != nullptr && m_socket->IsConnected())
