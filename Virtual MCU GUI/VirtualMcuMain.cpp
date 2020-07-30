@@ -194,7 +194,7 @@ void VirtualMcuMain::OnSliderUpdate(wxScrollEvent& evt)
 			slider_value_prev0 = slider_value;
 			if (m_socket != nullptr && m_socket->IsConnected())
 			{
-				socket_message = wxString("SET ADC0 " + wxString::Format("%.2f", voltage));
+				socket_message = wxString("SET ADC0 " + wxString::Format("%d", slider_value));
 				m_console_output->AppendText("< sending: ");
 				m_console_output->AppendText(socket_message);
 				m_console_output->Newline();
@@ -212,7 +212,7 @@ void VirtualMcuMain::OnSliderUpdate(wxScrollEvent& evt)
 			slider_value_prev1 = slider_value;
 			if (m_socket != nullptr && m_socket->IsConnected())
 			{
-				socket_message = wxString("SET ADC1 " + wxString::Format("%.2f", voltage));
+				socket_message = wxString("SET ADC1 " + wxString::Format("%d", slider_value));
 				m_console_output->AppendText("< sending: ");
 				m_console_output->AppendText(socket_message);
 				m_console_output->Newline();
