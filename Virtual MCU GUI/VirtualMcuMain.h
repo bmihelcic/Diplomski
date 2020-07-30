@@ -4,9 +4,19 @@
 #include <wx/sckipc.h>
 #include <wx/richtext/richtextctrl.h>
 #include <wx/slider.h>
+#include <wx/tokenzr.h>
 
 #define MCU_NOMINAL_VOLTAGE (3.3f)
 #define ADC_MAX_VALUE (4095u)
+
+typedef enum {
+	ERROR_OK,
+	ERROR_FAIL,
+	ERROR_INVALID_HEX
+}ERROR_E;
+
+int stringToDec(wxString& inputString);
+int hexCharToDec(char c, ERROR_E* error);
 
 class VirtualMcuMain : public wxFrame
 {
@@ -19,6 +29,7 @@ public:
 	void OnRefresh(wxCommandEvent& evt);
 	void OnClientClose(wxCommandEvent& evt);
 	void OnSocketEvent(wxSocketEvent& evt);
+	void UpdateDebugLabels(wxString& buf);
 
 protected:
 	wxToggleButton* output_pin[4];
@@ -38,11 +49,11 @@ protected:
 	wxRichTextCtrl* m_console_output;
 	wxSocketClient* m_socket;
 	wxStaticText* m_staticText13;
-	wxStaticText* m_staticText14;
+	wxStaticText* m_debug_label_led_state;
 	wxStaticText* m_staticText15;
-	wxStaticText* m_staticText16;
+	wxStaticText* m_debug_label_adc0;
 	wxStaticText* m_staticText17;
-	wxStaticText* m_staticText18;
+	wxStaticText* m_debug_label_adc1;
 
 private:
 	wxDECLARE_EVENT_TABLE();

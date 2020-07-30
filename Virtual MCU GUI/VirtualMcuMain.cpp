@@ -68,17 +68,17 @@ VirtualMcuMain::VirtualMcuMain() : wxFrame(nullptr, wxID_ANY, "VIRTUAL MCU")
 	wx_flex_grid_sizer_2_1->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
 	m_staticText13 = new wxStaticText(this, wxID_ANY, wxT("INPUT: "), wxDefaultPosition, wxDefaultSize, 0);
-	m_staticText14 = new wxStaticText(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, 0);
+	m_debug_label_led_state = new wxStaticText(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, 0);
 	m_staticText15 = new wxStaticText(this, wxID_ANY, wxT("ADC0: "), wxDefaultPosition, wxDefaultSize, 0);
-	m_staticText16 = new wxStaticText(this, wxID_ANY, wxT("2047"), wxDefaultPosition, wxDefaultSize, 0);
+	m_debug_label_adc0 = new wxStaticText(this, wxID_ANY, wxT("2047"), wxDefaultPosition, wxDefaultSize, 0);
 	m_staticText17 = new wxStaticText(this, wxID_ANY, wxT("ADC1:"), wxDefaultPosition, wxDefaultSize, 0);
-	m_staticText18 = new wxStaticText(this, wxID_ANY, wxT("2047"), wxDefaultPosition, wxDefaultSize, 0);
+	m_debug_label_adc1 = new wxStaticText(this, wxID_ANY, wxT("2047"), wxDefaultPosition, wxDefaultSize, 0);
 	m_staticText13->Wrap(-1);
-	m_staticText14->Wrap(-1);
+	m_debug_label_led_state->Wrap(-1);
 	m_staticText15->Wrap(-1);
-	m_staticText16->Wrap(-1);
+	m_debug_label_adc0->Wrap(-1);
 	m_staticText17->Wrap(-1);
-	m_staticText18->Wrap(-1);
+	m_debug_label_adc1->Wrap(-1);
 
 	m_menu_bar = new wxMenuBar(0);
 	m_main_menu = new wxMenu();
@@ -148,11 +148,11 @@ VirtualMcuMain::VirtualMcuMain() : wxFrame(nullptr, wxID_ANY, "VIRTUAL MCU")
 	wx_box_sizer_2->Add(wx_flex_grid_sizer_2_1, 0, wxALL | wxEXPAND, 5);
 
 	wx_box_sizer_3_1->Add(m_staticText13, 0, wxALIGN_CENTER | wxLEFT, 40);
-	wx_box_sizer_3_1->Add(m_staticText14, 0, wxALIGN_CENTER | wxLEFT, 5);
+	wx_box_sizer_3_1->Add(m_debug_label_led_state, 0, wxALIGN_CENTER | wxLEFT, 5);
 	wx_box_sizer_3_1->Add(m_staticText15, 0, wxALIGN_CENTER | wxLEFT, 50);
-	wx_box_sizer_3_1->Add(m_staticText16, 0, wxALIGN_CENTER | wxLEFT, 5);
+	wx_box_sizer_3_1->Add(m_debug_label_adc0, 0, wxALIGN_CENTER | wxLEFT, 5);
 	wx_box_sizer_3_1->Add(m_staticText17, 0, wxALIGN_CENTER | wxLEFT, 50);
-	wx_box_sizer_3_1->Add(m_staticText18, 0, wxALIGN_CENTER | wxLEFT, 5);
+	wx_box_sizer_3_1->Add(m_debug_label_adc1, 0, wxALIGN_CENTER | wxLEFT, 5);
 	wx_box_sizer_3_2->Add(m_console_output, 1, wxEXPAND | wxALL, 5);		
 
 	wx_box_sizer_3->Add(wx_box_sizer_3_1, 0, wxEXPAND | wxRIGHT, 5);
@@ -310,6 +310,7 @@ void VirtualMcuMain::OnSocketEvent(wxSocketEvent& event)
 			foundAtIndex = wxBuf.Find("0x125:");
 			if (wxNOT_FOUND != foundAtIndex)
 			{
+				UpdateDebugLabels(wxBuf);
 				for (int i = 0; i < 4; i++)
 				{
 					if ('1' == buf[foundAtIndex + 13 + i])
@@ -375,6 +376,39 @@ void VirtualMcuMain::OnRefresh(wxCommandEvent& evt)
 	}
 }
 
+void VirtualMcuMain::UpdateDebugLabels(wxString& buf) 
+{
+	wxString slicedString[10] = {"0x0", "0x0", "0x0", "0x0",
+	"0x0", "0x0", "0x0", "0x0","0x0", "0x0"};
+	int debugLedState;
+	int debugADC0;
+	int debugADC1;
+	int temp1, temp2;
+
+	wxStringTokenizer debugTokenizer(buf," ", wxTOKEN_DEFAULT);
+
+	if (m_socket != nullptr)
+	{
+		for (int i = 0; i <= 5; i++)
+		{
+			if (debugTokenizer.HasMoreTokens())
+			{
+				slicedString[i] = debugTokenizer.GetNextToken();
+			}
+		}
+		debugLedState = stringToDec(slicedString[1]);
+		temp1 = stringToDec(slicedString[2]);
+		temp2 = stringToDec(slicedString[3]);
+		debugADC0 = (temp1 + (temp2<<8));
+		temp1 = stringToDec(slicedString[4]);
+		temp2 = stringToDec(slicedString[5]);
+		debugADC1 = (temp1 + (temp2 << 8));
+		m_debug_label_led_state->SetLabel(wxString::Format(wxT("%d"), debugLedState));
+		m_debug_label_adc0->SetLabel(wxString::Format(wxT("%d"), debugADC0));
+		m_debug_label_adc1->SetLabel(wxString::Format(wxT("%d"), debugADC1));
+	}
+}
+
 void VirtualMcuMain::OnClientClose(wxCommandEvent& evt)
 {
 	if (m_socket != nullptr)
@@ -394,3 +428,67 @@ VirtualMcuMain::~VirtualMcuMain()
 	}
 }
 
+int stringToDec(wxString& inputString)
+{
+	int i;
+	int result = 0;
+	int n = strlen(inputString) - 2;  //how many digits w/o the 1st two (0x)
+	int exp = n;
+	ERROR_E error = ERROR_OK;
+
+	for (i = 0; i < n; i++)
+	{
+		if (error == ERROR_OK) {
+			result += hexCharToDec(inputString[i + 2], &error) * (int)pow(10, exp - 1);
+			exp--;
+		}
+		else {
+			result = -1;
+			printf("(error) Unable to decode input string, wrong hex values!\n");
+			break;
+		}
+	}
+	return result;
+}
+
+int hexCharToDec(char c, ERROR_E* error)
+{
+	int result;
+
+	if ((c == '0') || (c == '1') || (c == '2') || (c == '3') || (c == '4')
+		|| (c == '5') || (c == '6') || (c == '7') || (c == '8')
+		|| (c == '9'))
+	{
+		result = c - 48;
+	}
+	else if (c == 'A' || c == 'a')
+	{
+		result = 10;
+	}
+	else if (c == 'B' || c == 'b')
+	{
+		result = 11;
+	}
+	else if (c == 'C' || c == 'c')
+	{
+		result = 12;
+	}
+	else if (c == 'D' || c == 'd')
+	{
+		result = 13;
+	}
+	else if (c == 'E' || c == 'e')
+	{
+		result = 14;
+	}
+	else if (c == 'F' || c == 'f')
+	{
+		result = 15;
+	}
+	else {
+		result = -1;
+		*error = ERROR_INVALID_HEX;
+	}
+
+	return result;
+}
