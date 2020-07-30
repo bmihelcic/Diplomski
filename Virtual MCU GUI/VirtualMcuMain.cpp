@@ -206,6 +206,7 @@ void VirtualMcuMain::OnButtonClick(wxCommandEvent& evt)
 			socket_message = wxString("SET INPUT" + current_button_ID_label + " " + current_button_label);
 			m_console_output->WriteText(wxT("< sending: " + socket_message));
 			m_console_output->Newline();
+			m_console_output->ScrollIntoView(m_console_output->GetLastPosition(), WXK_END);
 			m_socket->Write(socket_message, sizeof(socket_message));
 		}
 	}
@@ -238,6 +239,7 @@ void VirtualMcuMain::OnSliderUpdate(wxScrollEvent& evt)
 				m_console_output->AppendText("< sending: ");
 				m_console_output->AppendText(socket_message);
 				m_console_output->Newline();
+				m_console_output->ScrollIntoView(m_console_output->GetLastPosition(), WXK_END);
 				m_socket->Write(socket_message, sizeof(socket_message));
 			}
 		}
@@ -256,6 +258,7 @@ void VirtualMcuMain::OnSliderUpdate(wxScrollEvent& evt)
 				m_console_output->AppendText("< sending: ");
 				m_console_output->AppendText(socket_message);
 				m_console_output->Newline();
+				m_console_output->ScrollIntoView(m_console_output->GetLastPosition(), WXK_END);
 				m_socket->Write(socket_message, sizeof(socket_message));
 			}
 		}		
@@ -283,6 +286,7 @@ void VirtualMcuMain::OnConnectToServer(wxCommandEvent& WXUNUSED(event))
 	m_item_close->Enable(true);
 	m_console_output->WriteText(wxT("(info) Connecting to localhost:8080"));
 	m_console_output->Newline();
+	m_console_output->ScrollIntoView(m_console_output->GetLastPosition(), WXK_END);
 }
 
 void VirtualMcuMain::OnSocketEvent(wxSocketEvent& event)
@@ -306,26 +310,12 @@ void VirtualMcuMain::OnSocketEvent(wxSocketEvent& event)
 			m_console_output->AppendText("> received: ");
 			m_console_output->AppendText(buf);
 			m_console_output->Newline();
+			m_console_output->ScrollIntoView(m_console_output->GetLastPosition(), WXK_END);
 			wxBuf = wxString::Format("%s", buf);
 			foundAtIndex = wxBuf.Find("0x125:");
 			if (wxNOT_FOUND != foundAtIndex)
 			{
 				UpdateDebugLabels(wxBuf);
-				for (int i = 0; i < 4; i++)
-				{
-					if ('1' == buf[foundAtIndex + 13 + i])
-					{
-						output_pin[i]->SetValue(true);
-						output_pin[i]->SetLabel("HIGH");
-						output_pin[i]->SetBackgroundColour(*wxBLUE);
-					}
-					else if ('N' == buf[foundAtIndex + 13 + i])
-					{
-						output_pin[i]->SetValue(false);
-						output_pin[i]->SetLabel("LOW");
-						output_pin[i]->SetBackgroundColour(wxNullColour);
-					}
-				}
 			}
 			break;
 		}// The server hangs up after sending the data
@@ -347,6 +337,7 @@ void VirtualMcuMain::OnRefresh(wxCommandEvent& evt)
 		m_console_output->AppendText("< sending: ");
 		m_console_output->AppendText(socket_message);
 		m_console_output->Newline();
+		m_console_output->ScrollIntoView(m_console_output->GetLastPosition(), WXK_END);
 		m_socket->Write(socket_message, sizeof(socket_message));
 		socket_message = wxString("SET ADC1 " + wxString::Format("%d", adc_slider_1->GetValue()));
 		m_console_output->AppendText("< sending: ");
@@ -372,6 +363,7 @@ void VirtualMcuMain::OnRefresh(wxCommandEvent& evt)
 		m_console_output->AppendText("< sending: ");
 		m_console_output->AppendText(socket_message);
 		m_console_output->Newline();
+		m_console_output->ScrollIntoView(m_console_output->GetLastPosition(), WXK_END);
 		m_socket->Write(socket_message, sizeof(socket_message));
 	}
 }
@@ -384,6 +376,7 @@ void VirtualMcuMain::UpdateDebugLabels(wxString& buf)
 	int debugADC0;
 	int debugADC1;
 	int temp1, temp2;
+	int ledIndex = 0;
 
 	wxStringTokenizer debugTokenizer(buf," ", wxTOKEN_DEFAULT);
 
@@ -406,6 +399,20 @@ void VirtualMcuMain::UpdateDebugLabels(wxString& buf)
 		m_debug_label_led_state->SetLabel(wxString::Format(wxT("%d"), debugLedState));
 		m_debug_label_adc0->SetLabel(wxString::Format(wxT("%d"), debugADC0));
 		m_debug_label_adc1->SetLabel(wxString::Format(wxT("%d"), debugADC1));
+		for (ledIndex = 0; ledIndex < 4; ledIndex++)
+		{
+			if (debugLedState & (1 << ledIndex)) {
+				output_pin[ledIndex]->SetLabel("HIGH");
+				output_pin[ledIndex]->SetValue(true);
+				output_pin[ledIndex]->SetBackgroundColour(*wxBLUE);
+			}
+			else
+			{
+				output_pin[ledIndex]->SetLabel("LOW");
+				output_pin[ledIndex]->SetValue(false);
+				output_pin[ledIndex]->SetBackgroundColour(wxNullColour);
+			}
+		}
 	}
 }
 
@@ -422,7 +429,7 @@ void VirtualMcuMain::OnClientClose(wxCommandEvent& evt)
 VirtualMcuMain::~VirtualMcuMain()
 {
 	// if socket has been initialized
-	if (m_socket != nullptr)
+	if (m_socket != nullptr && !(m_socket->IsClosed()))
 	{
 		m_socket->Destroy();
 	}
@@ -439,7 +446,7 @@ int stringToDec(wxString& inputString)
 	for (i = 0; i < n; i++)
 	{
 		if (error == ERROR_OK) {
-			result += hexCharToDec(inputString[i + 2], &error) * (int)pow(10, exp - 1);
+			result += hexCharToDec(inputString[i + 2], &error) * (int)pow(16, exp - 1);
 			exp--;
 		}
 		else {
