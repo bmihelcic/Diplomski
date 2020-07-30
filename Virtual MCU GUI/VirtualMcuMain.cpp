@@ -128,8 +128,8 @@ VirtualMcuMain::VirtualMcuMain() : wxFrame(nullptr, wxID_ANY, "VIRTUAL MCU")
 
 	adc_label_0 = new wxStaticText(this, wxID_ANY, wxT("ADC_CH0"), wxDefaultPosition, wxDefaultSize, 0);
 	adc_label_1 = new wxStaticText(this, wxID_ANY, wxT("ADC_CH1"), wxDefaultPosition, wxDefaultSize, 0);
-	adc_voltage_label_0 = new wxStaticText(this, wxID_ANY, wxT("1.65 V"), wxDefaultPosition, wxDefaultSize, 0);
-	adc_voltage_label_1 = new wxStaticText(this, wxID_ANY, wxT("1.65 V"), wxDefaultPosition, wxDefaultSize, 0);
+	adc_voltage_label_0 = new wxStaticText(this, wxID_ANY, wxT("2047"), wxDefaultPosition, wxDefaultSize, 0);
+	adc_voltage_label_1 = new wxStaticText(this, wxID_ANY, wxT("2047"), wxDefaultPosition, wxDefaultSize, 0);
 	adc_slider_0 = new wxSlider(this, ID_slider_0, 2047, 0, 4095, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL);
 	adc_slider_0->Bind(wxEVT_SCROLL_CHANGED, &VirtualMcuMain::OnSliderUpdate, this);
 	adc_slider_1 = new wxSlider(this, ID_slider_1, 2047, 0, 4095, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL);
@@ -230,7 +230,7 @@ void VirtualMcuMain::OnSliderUpdate(wxScrollEvent& evt)
 		if (slider_value != slider_value_prev0)
 		{
 			voltage = slider_value * (MCU_NOMINAL_VOLTAGE / (ADC_MAX_VALUE + 1));
-			adc_voltage_label_0->SetLabel(wxString::Format("%.2f V", voltage));						
+			adc_voltage_label_0->SetLabel(wxString::Format("%d", slider_value));
 			slider_value_prev0 = slider_value;
 			if (m_socket != nullptr && m_socket->IsConnected())
 			{
@@ -248,7 +248,7 @@ void VirtualMcuMain::OnSliderUpdate(wxScrollEvent& evt)
 		if (slider_value != slider_value_prev1)
 		{
 			voltage = slider_value * (MCU_NOMINAL_VOLTAGE / (ADC_MAX_VALUE + 1));
-			adc_voltage_label_1->SetLabel(wxString::Format("%.2f V", voltage));;			
+			adc_voltage_label_1->SetLabel(wxString::Format("%d", slider_value));
 			slider_value_prev1 = slider_value;
 			if (m_socket != nullptr && m_socket->IsConnected())
 			{
