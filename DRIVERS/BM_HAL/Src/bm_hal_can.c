@@ -8,13 +8,13 @@
 #include "bm_hal_can.h"
 
 CAN_HandleTypeDef hcan;
+CAN_RxHeaderTypeDef CAN_rx_header;
+
 
 static void BM_HAL_CAN_initFilter();
 
 uint8_t CAN_rx_data[8] = {0};
 uint8_t CAN_tx_data[8] = {0};
-
-CAN_RxHeaderTypeDef CAN_rx_header;
 
 /**
   * @brief CAN Initialization Function
@@ -23,6 +23,7 @@ CAN_RxHeaderTypeDef CAN_rx_header;
   */
 void BM_HAL_CAN_init(void)
 {
+#ifdef STM32F103xB
   hcan.Instance = CAN1;
   hcan.Init.Prescaler = 9;
   hcan.Init.Mode = CAN_MODE_NORMAL;
@@ -39,15 +40,18 @@ void BM_HAL_CAN_init(void)
   {
     Error_Handler();
   }
-
+#endif
   BM_HAL_CAN_initFilter();
+#ifdef STM32F103xB
   HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO0_MSG_PENDING);
   HAL_CAN_Start(&hcan);
+#endif
 }
 
 
 void BM_HAL_CAN_send(uint8_t *aData, uint8_t dataBytesNum)
 {
+#ifdef STM32F103xB
     CAN_TxHeaderTypeDef CAN_tx_header;
     uint32_t CAN_tx_mailbox;
 
@@ -64,16 +68,20 @@ void BM_HAL_CAN_send(uint8_t *aData, uint8_t dataBytesNum)
         }
     }
     while(HAL_CAN_IsTxMessagePending(&hcan,CAN_tx_mailbox));
-
+#elif defined(VIRTUAL_MCU)
+    hcan.sendMsgFlag = 1;
+#endif
 }
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *canHandle)
 {
+#ifdef STM32F103xB
     if(HAL_CAN_GetRxMessage(canHandle, CAN_RX_FIFO0, &CAN_rx_header, CAN_rx_data) != HAL_OK)
     {
         Error_Handler();
     }
 //    systemState = SYSTEM_STATE_UART_OUT;
+#endif
 }
 
 
@@ -81,6 +89,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *canHandle)
 
 static void BM_HAL_CAN_initFilter()
 {
+#ifdef STM32F103xB
     CAN_FilterTypeDef filterConfig = {
             .FilterIdHigh = 0x000 <<5,
             .FilterIdLow = 0x0000,
@@ -95,5 +104,6 @@ static void BM_HAL_CAN_initFilter()
     };
 
     HAL_CAN_ConfigFilter(&hcan, &filterConfig);
+#endif
 
 }

@@ -6,6 +6,7 @@
  */
 
 #include "bm_hal.h"
+#include "bm_hal_uart.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -20,6 +21,7 @@ UART_HandleTypeDef huart1;
   */
 void BM_HAL_UART_init(void)
 {
+#ifdef STM32F103xB
   huart1.Instance = USART1;
   huart1.Init.BaudRate = 115200;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
@@ -32,6 +34,7 @@ void BM_HAL_UART_init(void)
   {
     Error_Handler();
   }
+#endif
 }
 
 
@@ -45,6 +48,11 @@ int BM_HAL_UART_printf(const char *fmt, ...)
     va_start(args, fmt);
     vsprintf(buf, fmt, args);
     va_end(args);
+#ifdef STM32F103xB
     HAL_UART_Transmit(&huart1, (uint8_t*) buf, strlen(buf), 0xFFFF);
+#elif defined (VIRTUAL_MCU)
+    printf("%s", buf);
+    fflush(stdout);
+#endif
     return n;
 }

@@ -12,17 +12,19 @@
 
 #ifdef STM32F103xB
 #include "stm32f103xb.h"
-
-
 #elif defined(VIRTUAL_MCU)
+// unused, needed for compatibility with stm32 api
+#define GPIOA (0)
+#define GPIOB (0)
 
-#define LL_GPIO_PIN_0 (0u)
-#define LL_GPIO_PIN_1 (1u)
-#define LL_GPIO_PIN_2 (2u)
-#define LL_GPIO_PIN_3 (3u)
+typedef struct{
+
+}GPIO_TypeDef;
+
+extern int outputPort[4];
+extern int inputPort[4];
 
 #endif
-
 
 
 typedef enum

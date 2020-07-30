@@ -7,11 +7,17 @@
 
 #include "bm_hal.h"
 #include "bm_hal_gpio.h"
+#include "bm_hal_adc.h"
+#include "bm_hal_can.h"
+#ifdef VIRTUAL_MCU
+#include <time.h>
+#include <stdlib.h>
+#endif
 
-
-#ifdef STM32F103xB
 
 SYSTEM_STATE_E systemState = SYSTEM_STATE_INIT;
+
+#ifdef STM32F103xB
 
 static void SystemClock_Config(void);
 
@@ -23,12 +29,6 @@ static DWORD WINAPI serverListenThread( LPVOID lpParam );
 static DWORD WINAPI serverTalkThread( LPVOID lpParam );
 static SOCKET acceptNewConnection(SOCKET listen_socket);
 static void handleSocketRead(SOCKET socket_descriptor);
-
-
-extern int outputPort[4];
-extern int inputPort[4];
-
-extern int outputPortChange;
 
 
 char rxBuff[1024] =
@@ -58,7 +58,6 @@ fd_set readfds;
 fd_set activefds;
 
 HANDLE  hThread[2];
-//PMYDATA pData[2];
 DWORD   dwThreadId[2];
 #endif
 
@@ -284,19 +283,15 @@ static DWORD WINAPI serverTalkThread( LPVOID lpParam )
 {
     int result = 0;
     SOCKET sd = 0; // socket descriptor
-    char send_message[35] = {0};
+    char send_message[256] = {0};
 
     while(1)
     {
-        if(1 == outputPortChange)
+        if(hcan.sendMsgFlag && readfds.fd_count > 1)
         {
-            outputPortChange = 0;
-            strcpy(send_message, "OUTPUT_STATE_");
-            send_message[13] = (1 == outputPort[0]) ? '1' : 'N';
-            send_message[14] = (1 == outputPort[1]) ? '1' : 'N';
-            send_message[15] = (1 == outputPort[2]) ? '1' : 'N';
-            send_message[16] = (1 == outputPort[3]) ? '1' : 'N';
-            send_message[17] = '\0';
+            hcan.sendMsgFlag = 0;
+            sprintf(send_message, "0x125: 0x%x 0x%x 0x%x 0x%x 0x%x\0", CAN_tx_data[0],
+                    CAN_tx_data[1], CAN_tx_data[2], CAN_tx_data[3], CAN_tx_data[4]);
             // readfds.fd_array[0] is listen socket
             printf("< sending: %s\n", send_message);
             fflush(stdout);
@@ -336,6 +331,7 @@ static void handleSocketRead(SOCKET socket_descriptor)
     static uint8_t error_counter = 0u;
     char* strPtr;
     int index = 0;
+    char adcVal[4] = {0};
 
     valread = recv(socket_descriptor, rxBuff, sizeof(rxBuff), 0);
     if (0 > valread)
@@ -389,32 +385,38 @@ static void handleSocketRead(SOCKET socket_descriptor)
         strPtr = strstr(rxBuff, "SET ADC");
         if (strPtr != NULL)
         {
-
+            for(int i=0; *((strPtr+9)+i) != '\0';i++)
+            {
+                adcVal[i] = *((strPtr+9)+i);
+            }
+            if(*(strPtr+7) == '0')
+            {
+                adcValue0 = atoi(adcVal);
+            }
+            else
+            {
+                adcValue1 = atoi(adcVal);
+            }
         }
-
-//        if (strstr(rxBuff, "REQ") != NULL)
-//        {
-//            strncpy(req_buff, rxBuff, 10);
-//            if (strstr(req_buff, "CAN"))
-//            {
-//                iResult = send(socket_descriptor, canMessage, (int) strlen(canMessage), 0);
-//                if (iResult == SOCKET_ERROR)
-//                {
-//                    printf("send failed with error: %d\n", WSAGetLastError());
-//                    fflush(stdout);
-//                    closesocket(socket_descriptor);
-//                    WSACleanup();
-//                    return;
-//                }
-//            }
-//        }
         else
         {
         }
-        //send(socket_descriptor, rxBuff, strlen(rxBuff), 0);
     }
 }
 #endif
+
+char hexToChar(uint8_t inHex)
+{
+    char retVal;
+
+    if(inHex < 0x10)
+    {
+
+    }
+
+
+    return retVal;
+}
 
 int stringToHex(char *inputString)
 {
@@ -491,6 +493,15 @@ void Error_Handler(void)
   /* User can add his own implementation to report the HAL error return state */
 
   /* USER CODE END Error_Handler_Debug */
+}
+
+void BM_HAL_delay(uint32_t mSec)
+{
+#ifdef STM32F103xB
+    HAL_Delay(mSec); // miliseconds
+#elif defined(VIRTUAL_MCU)
+    Sleep(mSec);
+#endif
 }
 
 #ifdef  USE_FULL_ASSERT
