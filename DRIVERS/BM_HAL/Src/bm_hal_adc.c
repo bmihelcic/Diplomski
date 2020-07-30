@@ -6,6 +6,9 @@
  */
 #include "bm_hal_adc.h"
 
+
+uint16_t adcValue0 = 0;
+uint16_t adcValue1 = 0;
 /**
   * @brief ADC1 Initialization Function
   * @param None
@@ -13,6 +16,7 @@
   */
 void BM_HAL_ADC_init()
 {
+#ifdef STM32F103xB
     LL_ADC_InitTypeDef ADC_InitStruct = {0};
     LL_ADC_CommonInitTypeDef ADC_CommonInitStruct = {0};
     LL_ADC_REG_InitTypeDef ADC_REG_InitStruct = {0};
@@ -49,6 +53,7 @@ void BM_HAL_ADC_init()
     LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_0, LL_ADC_SAMPLINGTIME_1CYCLE_5);
 
     LL_ADC_Enable(ADC1);
+#endif
 }
 
 
@@ -61,5 +66,13 @@ uint32_t BM_HAL_ADC_readChannel(ADC_TypeDef *ADCx, uint32_t channel)
     while(!LL_ADC_IsActiveFlag_EOS(ADCx));
     adc_value = LL_ADC_REG_ReadConversionData32(ADCx);
 #endif
+    if(LL_ADC_CHANNEL_0 == channel)
+    {
+        adc_value = adcValue0;
+    }
+    else if(LL_ADC_CHANNEL_1 == channel)
+    {
+        adc_value = adcValue1;
+    }
     return adc_value;
 }

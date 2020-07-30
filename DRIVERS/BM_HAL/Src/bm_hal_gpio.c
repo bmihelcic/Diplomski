@@ -11,10 +11,8 @@
 
 
 #elif defined(VIRTUAL_MCU)
-int outputPort[4] = {0};
-int inputPort[4] = {0};
-
-int outputPortChange = 0;
+int outputPort[4] = {BM_GPIO_LOW, BM_GPIO_LOW, BM_GPIO_LOW, BM_GPIO_LOW};
+int inputPort[4] = {BM_GPIO_HIGH, BM_GPIO_HIGH, BM_GPIO_HIGH, BM_GPIO_HIGH};
 
 #endif
 
@@ -25,6 +23,7 @@ int outputPortChange = 0;
   */
 void BM_HAL_GPIO_init()
 {
+#ifdef STM32F103xB
     LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
     /* GPIO Ports Clock Enable */
@@ -61,6 +60,7 @@ void BM_HAL_GPIO_init()
     /**/
     GPIO_InitStruct.Pin = INPUT0_Pin;
     LL_GPIO_Init(INPUT0_GPIO_Port, &GPIO_InitStruct);
+#endif
 }
 
 
@@ -151,12 +151,10 @@ void BM_HAL_GPIO_digitalWrite(GPIO_TypeDef *GPIOx, uint32_t pin_mask, BM_HAL_GPI
     if (BM_GPIO_LOW == outputPort[pin_mask] && BM_GPIO_HIGH == pin_state)
     {
         outputPort[pin_mask] = BM_GPIO_HIGH;
-        outputPortChange = 1;
     }
     else if(BM_GPIO_HIGH == outputPort[pin_mask] && BM_GPIO_LOW == pin_state)
     {
         outputPort[pin_mask] = BM_GPIO_LOW;
-        outputPortChange = 1;
     }
 
 #endif
@@ -198,6 +196,5 @@ void BM_HAL_GPIO_TogglePin(GPIO_TypeDef *GPIOx, uint32_t pin_mask)
 	{
 	    outputPort[pin_mask] = BM_GPIO_HIGH;
 	}
-	outputPortChange = 1;
 #endif
 }
