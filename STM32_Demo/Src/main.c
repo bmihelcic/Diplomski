@@ -10,10 +10,12 @@
 #include "bm_hal_can.h"
 #include "bm_hal_uart.h"
 
+extern SYSTEM_STATE_E systemState;
+
 int main(void)
 {
-    uint16_t adcValue1 = 0;
-    uint16_t adcValue2 = 0;
+    uint16_t adc_val_0 = 0;
+    uint16_t adc_val_1 = 0;
     uint8_t inputState = 0;
 
     BM_HAL_init();
@@ -81,12 +83,12 @@ int main(void)
                 }
 
                 CAN_tx_data[0] = inputState;
-                adcValue1 = BM_HAL_ADC_readChannel(ADC1, LL_ADC_CHANNEL_0);
-                CAN_tx_data[1] = adcValue1;
-                CAN_tx_data[2] = (adcValue1 >> 8) & 0x0F;
-                adcValue2 = BM_HAL_ADC_readChannel(ADC1, LL_ADC_CHANNEL_1);
-                CAN_tx_data[3] = adcValue2;
-                CAN_tx_data[4] = (adcValue2 >> 8) & 0x0F;
+                adc_val_0 = BM_HAL_ADC_readChannel(ADC1, LL_ADC_CHANNEL_0);
+                CAN_tx_data[1] = adc_val_0;
+                CAN_tx_data[2] = (adc_val_0 >> 8) & 0x0F;
+                adc_val_1 = BM_HAL_ADC_readChannel(ADC1, LL_ADC_CHANNEL_1);
+                CAN_tx_data[3] = adc_val_1;
+                CAN_tx_data[4] = (adc_val_1 >> 8) & 0x0F;
 
                 systemState = SYSTEM_STATE_CAN_OUT;
                 break;
@@ -99,9 +101,12 @@ int main(void)
             }
             case SYSTEM_STATE_UART_OUT:
             {
+#ifdef STM32F103xB
                 BM_HAL_UART_printf("CAN TX MSG: 0x%x : 0x%x 0x%x 0x%x 0x%x 0x%x\r\n", ownID, CAN_tx_data[0],
                         CAN_tx_data[1], CAN_tx_data[2], CAN_tx_data[3], CAN_tx_data[4]);
-                BM_HAL_UART_printf("INPUT: %d  ADC0: %d  ADC1: %d\r\n\n", inputState, adcValue1, adcValue2);
+                BM_HAL_UART_printf("INPUT: %d  ADC0: %d  ADC1: %d\r\n\n", inputState, adc_val_0, adc_val_1);
+#elif defined(VIRTUAL_MCU)
+#endif
                 systemState = SYSTEM_STATE_MEASUREMENT;
                 break;
             }
@@ -110,6 +115,10 @@ int main(void)
                 systemState = SYSTEM_STATE_MEASUREMENT;
             }
         }
-        HAL_Delay(50);
+#ifdef STM32F103xB
+        BM_HAL_delay(50);
+#elif defined(VIRTUAL_MCU)
+        BM_HAL_delay(500);
+#endif
    }
 }

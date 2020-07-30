@@ -31,8 +31,8 @@ typedef enum {
     SYSTEM_STATE_UART_OUT
 }SYSTEM_STATE_E;
 
-int stringToHex(char*);
-int hexCharToDec(char, ERROR_E*);
+//int stringToHex(char*);
+//int hexCharToDec(char, ERROR_E*);
 
 void BM_HAL_init();
 void BM_HAL_delay(uint32_t mSec);

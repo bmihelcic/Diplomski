@@ -405,83 +405,70 @@ static void handleSocketRead(SOCKET socket_descriptor)
 }
 #endif
 
-char hexToChar(uint8_t inHex)
-{
-    char retVal;
-
-    if(inHex < 0x10)
-    {
-
-    }
-
-
-    return retVal;
-}
-
-int stringToHex(char *inputString)
-{
-    int i;
-    int result = 0;
-    int n = strlen(inputString)-2;  //how many digits w/o the 1st two (0x)
-    int exp=n;
-    ERROR_E error = ERROR_OK;
-
-    for (i = 0; i < n; i++)
-    {
-        if(error == ERROR_OK){
-            result += hexCharToDec(inputString[i+2], &error) * (int)pow(16, exp-1);
-            exp--;
-        }
-        else{
-            result = -1;
-            printf("(error) Unable to decode input string, wrong hex values!\n");
-            break;
-        }
-    }
-    return result;
-}
-
-int hexCharToDec(char c, ERROR_E *error)
-{
-    int result;
-
-    if ((c == '0') || (c == '1') || (c == '2') || (c == '3') || (c == '4')
-            || (c == '5') || (c == '6') || (c == '7') || (c == '8')
-            || (c == '9'))
-    {
-        result = c - 48;
-    }
-    else if (c == 'A' || c == 'a')
-    {
-        result = 10;
-    }
-    else if (c == 'B' || c == 'b')
-    {
-        result = 11;
-    }
-    else if (c == 'C' || c == 'c')
-    {
-        result = 12;
-    }
-    else if (c == 'D' || c == 'd')
-    {
-        result = 13;
-    }
-    else if (c == 'E' || c == 'e')
-    {
-        result = 14;
-    }
-    else if (c == 'F' || c == 'f')
-    {
-        result = 15;
-    }
-    else{
-        result = -1;
-        *error = ERROR_INVALID_HEX;
-    }
-
-    return result;
-}
+//int stringToHex(char *inputString)
+//{
+//    int i;
+//    int result = 0;
+//    int n = strlen(inputString)-2;  //how many digits w/o the 1st two (0x)
+//    int exp=n;
+//    ERROR_E error = ERROR_OK;
+//
+//    for (i = 0; i < n; i++)
+//    {
+//        if(error == ERROR_OK){
+//            result += hexCharToDec(inputString[i+2], &error) * (int)pow(16, exp-1);
+//            exp--;
+//        }
+//        else{
+//            result = -1;
+//            printf("(error) Unable to decode input string, wrong hex values!\n");
+//            break;
+//        }
+//    }
+//    return result;
+//}
+//
+//int hexCharToDec(char c, ERROR_E *error)
+//{
+//    int result;
+//
+//    if ((c == '0') || (c == '1') || (c == '2') || (c == '3') || (c == '4')
+//            || (c == '5') || (c == '6') || (c == '7') || (c == '8')
+//            || (c == '9'))
+//    {
+//        result = c - 48;
+//    }
+//    else if (c == 'A' || c == 'a')
+//    {
+//        result = 10;
+//    }
+//    else if (c == 'B' || c == 'b')
+//    {
+//        result = 11;
+//    }
+//    else if (c == 'C' || c == 'c')
+//    {
+//        result = 12;
+//    }
+//    else if (c == 'D' || c == 'd')
+//    {
+//        result = 13;
+//    }
+//    else if (c == 'E' || c == 'e')
+//    {
+//        result = 14;
+//    }
+//    else if (c == 'F' || c == 'f')
+//    {
+//        result = 15;
+//    }
+//    else{
+//        result = -1;
+//        *error = ERROR_INVALID_HEX;
+//    }
+//
+//    return result;
+//}
 
 /**
   * @brief  This function is executed in case of error occurrence.

@@ -65,7 +65,7 @@ uint32_t BM_HAL_ADC_readChannel(ADC_TypeDef *ADCx, uint32_t channel)
     LL_ADC_REG_StartConversionSWStart(ADCx);
     while(!LL_ADC_IsActiveFlag_EOS(ADCx));
     adc_value = LL_ADC_REG_ReadConversionData32(ADCx);
-#endif
+#elif defined(VIRTUAL_MCU)
     if(LL_ADC_CHANNEL_0 == channel)
     {
         adc_value = adcValue0;
@@ -74,5 +74,6 @@ uint32_t BM_HAL_ADC_readChannel(ADC_TypeDef *ADCx, uint32_t channel)
     {
         adc_value = adcValue1;
     }
+#endif
     return adc_value;
 }

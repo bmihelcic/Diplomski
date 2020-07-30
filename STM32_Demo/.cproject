@@ -98,11 +98,11 @@
 							</tool>
 							<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.1170492679" name="GNU ARM Cross C Compiler" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler">
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths.663623486" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths" useByScannerDiscovery="true" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;D:\Backup\Projects\GIT_local\Diplomski\DRIVERS\CMSIS\Device\ST\STM32F1xx\Include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;D:\Backup\Projects\GIT_local\Diplomski\STM32_Demo\Inc&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;D:\Backup\Projects\GIT_local\Diplomski\DRIVERS\BM_HAL\Inc&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;D:\Backup\Projects\GIT_local\Diplomski\DRIVERS\STM32F1xx_Driver\Inc&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;D:\Backup\Projects\GIT_local\Diplomski\DRIVERS\CMSIS\Include&quot;"/>
+									<listOptionValue builtIn="false" value=".././Inc"/>
+									<listOptionValue builtIn="false" value="&quot;../..\DRIVERS\BM_HAL\Inc&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;../..\DRIVERS\CMSIS\Include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;../..\DRIVERS\CMSIS\Device\ST\STM32F1xx\Include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;../..\DRIVERS\STM32F1xx_Driver\Inc&quot;"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs.478475879" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs" useByScannerDiscovery="true" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="STM32F103xB"/>
