@@ -118,7 +118,7 @@ int main(void)
 #ifdef STM32F103xB
         BM_HAL_delay(50);
 #elif defined(VIRTUAL_MCU)
-        BM_HAL_delay(500);
+        BM_HAL_delay(100);
 #endif
    }
 }
