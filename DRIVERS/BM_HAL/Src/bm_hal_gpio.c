@@ -11,8 +11,8 @@
 
 
 #elif defined(VIRTUAL_MCU)
-int outputPort[4] = {0};
-int inputPort[4] = {1};
+int outputPort[4] = {BM_GPIO_LOW, BM_GPIO_LOW, BM_GPIO_LOW, BM_GPIO_LOW};
+int inputPort[4] = {BM_GPIO_HIGH, BM_GPIO_HIGH, BM_GPIO_HIGH, BM_GPIO_HIGH};
 
 #endif
 
