@@ -201,7 +201,7 @@ void VirtualMcuMain::OnButtonClick(wxCommandEvent& evt)
 		current_button_label = ((true == current_button_state) ? "LOW" : "HIGH");
 		input_pin[current_button_ID - 4]->SetLabel(current_button_label);
 		current_button_ID_label = std::to_string(current_button_ID - 4);
-		if (m_socket != nullptr && m_socket->IsConnected())
+		if (m_socket != nullptr && m_socket->IsConnected() && !(m_socket->IsClosed()))
 		{
 			socket_message = wxString("SET INPUT" + current_button_ID_label + " " + current_button_label);
 			m_console_output->WriteText(wxT("< sending: " + socket_message));
@@ -233,7 +233,7 @@ void VirtualMcuMain::OnSliderUpdate(wxScrollEvent& evt)
 			voltage = slider_value * (MCU_NOMINAL_VOLTAGE / (ADC_MAX_VALUE + 1));
 			adc_voltage_label_0->SetLabel(wxString::Format("%d", slider_value));
 			slider_value_prev0 = slider_value;
-			if (m_socket != nullptr && m_socket->IsConnected())
+			if (m_socket != nullptr && m_socket->IsConnected() && !(m_socket->IsClosed()))
 			{
 				socket_message = wxString("SET ADC0 " + wxString::Format("%d", slider_value));
 				m_console_output->AppendText("< sending: ");
@@ -252,7 +252,7 @@ void VirtualMcuMain::OnSliderUpdate(wxScrollEvent& evt)
 			voltage = slider_value * (MCU_NOMINAL_VOLTAGE / (ADC_MAX_VALUE + 1));
 			adc_voltage_label_1->SetLabel(wxString::Format("%d", slider_value));
 			slider_value_prev1 = slider_value;
-			if (m_socket != nullptr && m_socket->IsConnected())
+			if (m_socket != nullptr && m_socket->IsConnected() && !(m_socket->IsClosed()))
 			{
 				socket_message = wxString("SET ADC1 " + wxString::Format("%d", slider_value));
 				m_console_output->AppendText("< sending: ");
@@ -332,7 +332,7 @@ void VirtualMcuMain::OnRefresh(wxCommandEvent& evt)
 {
 	wxString socket_message;
 
-	if (m_socket != nullptr && m_socket->IsConnected()) {
+	if (m_socket != nullptr && m_socket->IsConnected() && !(m_socket->IsClosed())) {
 		socket_message = wxString("SET ADC0 " + wxString::Format("%d", adc_slider_0->GetValue()));
 		m_console_output->AppendText("< sending: ");
 		m_console_output->AppendText(socket_message);
